@@ -1,16 +1,30 @@
 export type ExerciseKind = 'lift' | 'walk' | 'mobility'
+export type ExerciseRole = 'card' | 'swap' | 'later'
+export type DayGroup = 'push' | 'pull' | 'legs' | 'other'
 
 export type Exercise = {
   id: string
   name: string
   kind: ExerciseKind
+  role: ExerciseRole
+  dayGroup: DayGroup
   equipment: string
   muscles: string[]
   cues: string[]
   setupImage: string
   finishImage: string
   video: string
+  vasaUrl?: string
+  youtubeId?: string
+  videoCredit?: string
   substituteIds: string[]
+}
+
+export type AvoidItem = {
+  id: string
+  name: string
+  dayGroup: DayGroup
+  why: string
 }
 
 export type WalkBlock = {

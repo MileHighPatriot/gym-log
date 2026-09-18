@@ -95,7 +95,9 @@ export function lastByExercise(logs: SessionLog[]): Record<string, { weight: num
       if (block.kind !== 'lift') continue
       const done = [...block.logged].reverse().find((set) => set.done && set.weight != null)
       if (!done) continue
-      map[block.exerciseId] = { weight: done.weight, reps: done.reps }
+      const last = { weight: done.weight, reps: done.reps }
+      map[block.exerciseId] = last
+      if (block.substituteOf) map[block.substituteOf] = last
     }
   }
   return map

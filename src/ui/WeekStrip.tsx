@@ -31,7 +31,7 @@ export function WeekStrip({
           >
             <span>{WEEKDAY_SHORT[weekday]}</span>
             <strong>{date.slice(8)}</strong>
-            <em>{day ? day.title.slice(0, 1) : 'R'}</em>
+            <em>{day ? (day.id.startsWith('push') ? 'U' : day.id.startsWith('pull') ? 'P' : 'L') : 'R'}</em>
           </button>
         )
       })}

@@ -52,3 +52,34 @@ export function formatClock(sec: number): string {
 export function formatReps(min: number, max: number): string {
   return min === max ? `${min}` : `${min}–${max}`
 }
+
+export function monthLabel(iso: string): string {
+  return parseISODate(iso).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+}
+
+export function shiftMonth(iso: string, delta: number): string {
+  const date = parseISODate(iso)
+  const day = date.getDate()
+  date.setDate(1)
+  date.setMonth(date.getMonth() + delta)
+  const last = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  date.setDate(Math.min(day, last))
+  return localISODate(date)
+}
+
+export function sameMonth(a: string, b: string): boolean {
+  return a.slice(0, 7) === b.slice(0, 7)
+}
+
+/** 6×7 grid starting Sunday, covering the month of `iso`. */
+export function monthGrid(iso: string): string[] {
+  const date = parseISODate(iso)
+  const first = new Date(date.getFullYear(), date.getMonth(), 1)
+  const start = new Date(first)
+  start.setDate(1 - first.getDay())
+  return Array.from({ length: 42 }, (_, i) => {
+    const cell = new Date(start)
+    cell.setDate(start.getDate() + i)
+    return localISODate(cell)
+  })
+}

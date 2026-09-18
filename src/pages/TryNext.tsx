@@ -1,5 +1,5 @@
 import { SUGGESTIONS } from '../data/suggestions.ts'
-import { DAYS, dayById } from '../data/program.ts'
+import { DAYS } from '../data/program.ts'
 import { getExercise } from '../data/exercises.ts'
 import { formatReps, formatRest } from '../lib/dates.ts'
 import { useStore } from '../state/Store.tsx'
@@ -22,7 +22,10 @@ export function TryNextPage() {
       )}
       {visible.map((suggestion) => {
         const exercise = getExercise(suggestion.exerciseId)
-        const day = dayById(days, suggestion.fitsDayProgramId)
+        const day =
+          days.find((d) => d.id === suggestion.fitsDayProgramId) ??
+          days.find((d) => d.id.startsWith(suggestion.fitsDayProgramId.split('-')[0]))
+        if (!day) return null
         const pinned = state.pinnedSuggestions.find((p) => p.suggestionId === suggestion.id)
         return (
           <article key={suggestion.id} className="card">

@@ -1,7 +1,7 @@
 import type { Tab } from '../types.ts'
 
 const ITEMS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'today', label: 'Today', icon: '●' },
+  { id: 'today', label: 'Cal', icon: '●' },
   { id: 'exercises', label: 'Lifts', icon: '☰' },
   { id: 'progress', label: 'Log', icon: '↗' },
   { id: 'try', label: 'Try', icon: '+' },

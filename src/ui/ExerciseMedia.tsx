@@ -15,7 +15,24 @@ export function ExerciseMedia({
   return (
     <div className={compact ? 'media compact' : 'media'}>
       <div className="media-frame">
-        {which === 'video' && !broken.video ? (
+        {which === 'video' && exercise.vasaUrl && !broken.vasa ? (
+          <video
+            key={exercise.vasaUrl}
+            src={exercise.vasaUrl}
+            controls
+            playsInline
+            poster={exercise.setupImage}
+            onError={() => setBroken((b) => ({ ...b, vasa: true }))}
+          />
+        ) : which === 'video' && exercise.youtubeId && !broken.youtube ? (
+          <iframe
+            title={`${exercise.name} video`}
+            src={`https://www.youtube.com/embed/${exercise.youtubeId}`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            onError={() => setBroken((b) => ({ ...b, youtube: true }))}
+          />
+        ) : which === 'video' && !broken.video ? (
           <video
             key={exercise.video}
             src={exercise.video}
@@ -36,6 +53,9 @@ export function ExerciseMedia({
           />
         )}
       </div>
+      {exercise.videoCredit && which === 'video' && (
+        <p className="muted">Video: {exercise.videoCredit}</p>
+      )}
       <div className="media-tabs">
         <button type="button" className={which === 'setup' ? 'on' : ''} onClick={() => setWhich('setup')}>
           Setup
@@ -44,7 +64,7 @@ export function ExerciseMedia({
           Finish
         </button>
         <button type="button" className={which === 'video' ? 'on' : ''} onClick={() => setWhich('video')}>
-          Video
+          {exercise.vasaUrl || exercise.youtubeId ? 'VASA video' : 'Video'}
         </button>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { AVOID } from '../data/avoid.ts'
 import { SCHEDULE, WEEKDAY_NAMES } from '../data/program.ts'
 import { getExercise } from '../data/exercises.ts'
 import { formatReps, formatRest } from '../lib/dates.ts'
@@ -52,6 +53,18 @@ export function ProgramPage() {
           </article>
         )
       })}
+
+      <article className="card">
+        <h2>Avoid</h2>
+        <ul className="plain">
+          {AVOID.map((item) => (
+            <li key={item.id}>
+              <strong>{item.name}</strong>
+              <span>{item.why}</span>
+            </li>
+          ))}
+        </ul>
+      </article>
 
       {state.programOverride && (
         <button type="button" onClick={resetProgram}>

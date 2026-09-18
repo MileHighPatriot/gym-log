@@ -1,3 +1,4 @@
+import { overrideMatchesSchedule } from '../data/program.ts'
 import type { AppState, BackupPayload } from '../types.ts'
 
 export const STORAGE_KEY = 'gym-log-v1'
@@ -16,8 +17,9 @@ export function parseBackup(raw: string): AppState {
   if (!data || data.version !== 1 || !Array.isArray(data.logs)) {
     throw new Error('Not a Gym Log backup')
   }
+  const override = data.programOverride ?? null
   return {
-    programOverride: data.programOverride ?? null,
+    programOverride: override && overrideMatchesSchedule(override) ? override : null,
     logs: data.logs,
     activeSession: data.activeSession ?? null,
     bodyWeight: Array.isArray(data.bodyWeight) ? data.bodyWeight : [],

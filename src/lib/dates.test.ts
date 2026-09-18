@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, formatClock, formatReps, formatRest, mondayOfWeek, weekDates, weekdayOf } from './dates.ts'
+import { addDays, formatClock, formatReps, formatRest, mondayOfWeek, monthGrid, shiftMonth, weekDates, weekdayOf } from './dates.ts'
 
 describe('dates', () => {
   it('weekdayOf uses local calendar dates', () => {
@@ -28,6 +28,17 @@ describe('dates', () => {
 
   it('addDays', () => {
     expect(addDays('2026-09-30', 1)).toBe('2026-10-01')
+  })
+
+  it('monthGrid starts on Sunday and covers the month', () => {
+    const cells = monthGrid('2026-09-18')
+    expect(cells).toHaveLength(42)
+    expect(cells[0]).toBe('2026-08-30')
+    expect(weekdayOf(cells[0])).toBe(0)
+    expect(cells).toContain('2026-09-01')
+    expect(cells).toContain('2026-09-30')
+    expect(shiftMonth('2026-09-18', 1)).toBe('2026-10-18')
+    expect(shiftMonth('2026-01-31', 1)).toBe('2026-02-28')
   })
 
   it('formats rest and clock', () => {

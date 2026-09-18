@@ -15,6 +15,8 @@ type StoreApi = {
   openExercise: (id: string | null) => void
   days: DayProgram[]
   today: string
+  selectedDate: string
+  setSelectedDate: (date: string) => void
   startWorkout: (day: DayProgram, date?: string) => void
   resumeWorkout: () => void
   updateActive: (session: SessionLog) => void
@@ -38,6 +40,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(() => loadState())
   const [tab, setTab] = useState<Tab>(() => tabFromLocation() ?? 'today')
   const [exerciseId, setExerciseId] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState(() => localISODate())
 
   useEffect(() => {
     saveState(state)
@@ -78,6 +81,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       days,
       today,
+      selectedDate,
+      setSelectedDate,
       startWorkout(day, date = today) {
         const session = buildSession({
           day,
@@ -166,7 +171,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setState(parseBackup(raw))
       },
     }
-  }, [state, tab, exerciseId, days, today])
+  }, [state, tab, exerciseId, days, today, selectedDate])
 
   return <StoreContext.Provider value={api}>{children}</StoreContext.Provider>
 }

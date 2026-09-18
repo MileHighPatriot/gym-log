@@ -5,14 +5,14 @@ import type { SessionLog } from '../types.ts'
 
 describe('session', () => {
   it('clones a push day with last weights prefilled', () => {
-    const push = DAYS.find((d) => d.id === 'push')!
+    const push = DAYS.find((d) => d.id === 'push-a')!
     const session = startSession({
       day: push,
       date: '2026-09-21',
       weekday: 1,
       lastByExercise: { 'bench-press': { weight: 135, reps: 8 } },
     })
-    expect(session.dayProgramId).toBe('push')
+    expect(session.dayProgramId).toBe('push-a')
     expect(session.blocks[0]).toMatchObject({ kind: 'walk', durationSec: 300, done: false })
     const bench = session.blocks.find((b) => b.kind === 'lift' && b.exerciseId === 'bench-press')
     expect(bench?.kind).toBe('lift')
@@ -23,7 +23,7 @@ describe('session', () => {
   })
 
   it('inserts pinned extras before the cooldown walk', () => {
-    const push = DAYS.find((d) => d.id === 'push')!
+    const push = DAYS.find((d) => d.id === 'push-a')!
     const session = startSession({
       day: push,
       date: '2026-09-21',
@@ -47,7 +47,7 @@ describe('session', () => {
   })
 
   it('tracks progress, completion, last set, and swaps', () => {
-    const push = DAYS.find((d) => d.id === 'push')!
+    const push = DAYS.find((d) => d.id === 'push-a')!
     let session = startSession({
       day: push,
       date: '2026-09-21',
@@ -57,12 +57,12 @@ describe('session', () => {
     expect(sessionComplete(session)).toBe(false)
     expect(sessionProgress(session).total).toBe(3 + 3 + 3 + 3 + 2)
 
-    session = swapLift(session, 'push-incline', 'incline-machine')
-    const incline = session.blocks.find((b) => b.id === 'push-incline')
-    expect(incline).toMatchObject({
+    session = swapLift(session, 'pa-bench', 'seated-chest-press')
+    const bench = session.blocks.find((b) => b.id === 'pa-bench')
+    expect(bench).toMatchObject({
       kind: 'lift',
-      exerciseId: 'incline-machine',
-      substituteOf: 'incline-bench',
+      exerciseId: 'seated-chest-press',
+      substituteOf: 'bench-press',
     })
 
     const finished: SessionLog = {
