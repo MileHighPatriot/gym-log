@@ -153,6 +153,10 @@ main {
   color: var(--muted);
 }
 
+.muted a {
+  color: var(--accent);
+}
+
 .note {
   background: #241c12;
   border: 1px solid #3a2e1c;

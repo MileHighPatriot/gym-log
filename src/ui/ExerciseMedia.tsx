@@ -15,22 +15,12 @@ export function ExerciseMedia({
   return (
     <div className={compact ? 'media compact' : 'media'}>
       <div className="media-frame">
-        {which === 'video' && exercise.vasaUrl && !broken.vasa ? (
-          <video
-            key={exercise.vasaUrl}
-            src={exercise.vasaUrl}
-            controls
-            playsInline
-            poster={exercise.setupImage}
-            onError={() => setBroken((b) => ({ ...b, vasa: true }))}
-          />
-        ) : which === 'video' && exercise.youtubeId && !broken.youtube ? (
+        {which === 'video' && exercise.youtubeId && !broken.youtube ? (
           <iframe
-            title={`${exercise.name} video`}
+            title={`${exercise.name} at VASA`}
             src={`https://www.youtube.com/embed/${exercise.youtubeId}`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            onError={() => setBroken((b) => ({ ...b, youtube: true }))}
           />
         ) : which === 'video' && !broken.video ? (
           <video
@@ -54,7 +44,17 @@ export function ExerciseMedia({
         )}
       </div>
       {exercise.videoCredit && which === 'video' && (
-        <p className="muted">Video: {exercise.videoCredit}</p>
+        <p className="muted">
+          {exercise.videoCredit}
+          {exercise.youtubeId && (
+            <>
+              {' · '}
+              <a href={`https://www.youtube.com/watch?v=${exercise.youtubeId}`} target="_blank" rel="noreferrer">
+                Open on YouTube
+              </a>
+            </>
+          )}
+        </p>
       )}
       <div className="media-tabs">
         <button type="button" className={which === 'setup' ? 'on' : ''} onClick={() => setWhich('setup')}>
@@ -64,7 +64,7 @@ export function ExerciseMedia({
           Finish
         </button>
         <button type="button" className={which === 'video' ? 'on' : ''} onClick={() => setWhich('video')}>
-          {exercise.vasaUrl || exercise.youtubeId ? 'VASA video' : 'Video'}
+          {exercise.youtubeId ? 'YouTube · VASA' : 'Video'}
         </button>
       </div>
     </div>

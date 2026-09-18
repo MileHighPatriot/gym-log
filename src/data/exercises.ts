@@ -4,22 +4,11 @@ const base = import.meta.env.BASE_URL
 
 export const athleteFallback = `${base}exercises/_athlete.jpg`
 
-const VASA = {
-  chestPress: 'https://media.vasafitness.com/uploads/2022/10/Selectorized_ChestPress.mp4',
-  seatedRow: 'https://media.vasafitness.com/uploads/2022/10/Selectorized_SeatedRow.mp4',
-  rearDelt: 'https://media.vasafitness.com/uploads/2022/10/Selectorized_RearDelt.mp4',
-  legPress: 'https://media.vasafitness.com/uploads/2022/10/Selectorized_LegPress.mp4',
-  legExtension: 'https://media.vasafitness.com/uploads/2022/10/Selectorized_LegExtension.mp4',
-  seatedHam: 'https://media.vasafitness.com/uploads/2022/10/Selectorized_SeatedHamstringCurl.mp4',
-  shoulder: 'https://media.vasafitness.com/uploads/2022/10/Selectorized_ShoulderPress.mp4',
-  latPulldown: 'https://media.vasafitness.com/uploads/2022/10/Selectorized_LatPullDown.mp4',
-} as const
-
 function media(id: string) {
   return {
     setupImage: `${base}exercises/${id}/setup.jpg`,
     finishImage: `${base}exercises/${id}/finish.jpg`,
-    video: `${base}exercises/${id}/how.mp4`,
+    video: `${base}exercises/${id}/machine.mp4`,
   }
 }
 
@@ -48,7 +37,7 @@ function lift(
   }
 }
 
-export const EXERCISES: Exercise[] = [
+const RAW: Exercise[] = [
   lift(
     'bench-press',
     'Barbell bench press',
@@ -103,11 +92,7 @@ export const EXERCISES: Exercise[] = [
       'Handles start around ear / shoulder height. Never behind the neck.',
       'Press up without shrugging. Ribs down.',
     ],
-    {
-      substituteIds: ['plate-shoulder-press', 'smith-shoulder'],
-      vasaUrl: VASA.shoulder,
-      videoCredit: 'VASA Fitness',
-    },
+    { substituteIds: ['plate-shoulder-press', 'smith-shoulder'] },
   ),
   lift(
     'tricep-pushdown',
@@ -132,9 +117,9 @@ export const EXERCISES: Exercise[] = [
     ['Chest', 'Front shoulders', 'Triceps'],
     [
       'Seat so handles hit mid-chest. Press forward, then return with control.',
-      'VASA’s chest-press clip. Same pattern as a plate-loaded chest press.',
+      'Same pattern as a plate-loaded chest press.',
     ],
-    { substituteIds: ['bench-press', 'plate-chest-press'], vasaUrl: VASA.chestPress, videoCredit: 'VASA Fitness' },
+    { substituteIds: ['bench-press', 'plate-chest-press'] },
   ),
   lift(
     'plate-chest-press',
@@ -300,8 +285,6 @@ export const EXERCISES: Exercise[] = [
     ],
     {
       substituteIds: ['plate-pulldown', 'close-grip-pulldown', 'neutral-grip-pulldown', 'reverse-grip-pulldown'],
-      vasaUrl: VASA.latPulldown,
-      videoCredit: 'VASA Fitness',
     },
   ),
   lift(
@@ -315,11 +298,7 @@ export const EXERCISES: Exercise[] = [
       'One row only tonight. Do not also do plate-loaded row or cable row.',
       'Pull to the ribs. Chest on the pad. Shoulders down.',
     ],
-    {
-      substituteIds: ['plate-row', 'seated-cable-row', 'chest-supported-row'],
-      vasaUrl: VASA.seatedRow,
-      videoCredit: 'VASA Fitness',
-    },
+    { substituteIds: ['plate-row', 'seated-cable-row', 'chest-supported-row'] },
   ),
   lift(
     'plate-pulldown',
@@ -457,7 +436,7 @@ export const EXERCISES: Exercise[] = [
     'Reverse pec deck',
     ['Rear shoulders'],
     ['Chest on the pad. Sweep the arms back. This is later work, not a second row.'],
-    { vasaUrl: VASA.rearDelt, videoCredit: 'VASA Fitness' },
+    {},
   ),
   lift(
     'straight-arm-pulldown',
@@ -522,9 +501,9 @@ export const EXERCISES: Exercise[] = [
     ['Quads', 'Glutes'],
     [
       'Feet mid-platform. Lower without the hips rolling up.',
-      'Do not slam the sled. VASA’s selectorized clip.',
+      'Do not slam the sled.',
     ],
-    { vasaUrl: VASA.legPress, videoCredit: 'VASA Fitness' },
+    {},
   ),
   lift(
     'hamstring-curl',
@@ -535,9 +514,9 @@ export const EXERCISES: Exercise[] = [
     ['Hamstrings'],
     [
       'Hips glued to the pad. Line the knee up with the pivot.',
-      'Seated or lying is the same slot — pick one. The VASA video is the seated curl; lying is the same movement.',
+      'Seated or lying is the same slot — pick one.',
     ],
-    { vasaUrl: VASA.seatedHam, videoCredit: 'VASA Fitness' },
+    {},
   ),
   lift(
     'calf-machine',
@@ -587,9 +566,9 @@ export const EXERCISES: Exercise[] = [
     ['Quads'],
     [
       'Light. Skip if it pinches the knee. Line the joint up with the pivot.',
-      'VASA’s selectorized clip.',
+      'Light. Skip if it pinches.',
     ],
-    { vasaUrl: VASA.legExtension, videoCredit: 'VASA Fitness' },
+    {},
   ),
   lift(
     'seated-calf',
@@ -612,10 +591,7 @@ export const EXERCISES: Exercise[] = [
       'Soft knees. Bar close to the legs. Stop at mid-shin — do not go to the floor.',
       'This is later work, not the Saturday rack pull.',
     ],
-    {
-      youtubeId: 'a2rKaRV3GtM',
-      videoCredit: 'VASA Fitness',
-    },
+    {},
   ),
   lift(
     'belt-squat',
@@ -642,6 +618,65 @@ export const EXERCISES: Exercise[] = [
     ...media('mobility'),
   },
 ]
+
+/** Real YouTube clips of people lifting inside VASA Fitness gyms. Not Vasa Trainer (swim) videos. */
+const YT: Record<string, { youtubeId: string; videoCredit: string }> = {
+  'bench-press': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'incline-bench': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'incline-machine': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'seated-chest-press': { youtubeId: 'o3LL5R79s_c', videoCredit: 'YouTube · VASA Fitness · Alternating dumbbell chest press' },
+  'plate-chest-press': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'smith-bench': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'close-grip-bench': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'paused-bench': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'decline-press': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'pec-deck': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'cable-chest-fly': { youtubeId: 'YD3OVyML_gQ', videoCredit: 'YouTube · Training Chest at VASA Indianapolis' },
+  'shoulder-press-machine': { youtubeId: 'yfVBilIb-tI', videoCredit: 'YouTube · Arms & shoulders at VASA Fitness' },
+  'plate-shoulder-press': { youtubeId: 'yfVBilIb-tI', videoCredit: 'YouTube · Arms & shoulders at VASA Fitness' },
+  'smith-shoulder': { youtubeId: 'xxFy-dE9-nU', videoCredit: 'YouTube · VASA Fitness STRONG · Overhead press' },
+  'tricep-pushdown': { youtubeId: '-vys4LhUm7w', videoCredit: 'YouTube · VASA Fitness · Cable triceps' },
+  'overhead-tricep': { youtubeId: '-vys4LhUm7w', videoCredit: 'YouTube · VASA Fitness · Cable triceps' },
+  'tricep-extension-machine': { youtubeId: '-vys4LhUm7w', videoCredit: 'YouTube · VASA Fitness · Cable triceps' },
+  'assisted-dip': { youtubeId: '-vys4LhUm7w', videoCredit: 'YouTube · VASA Fitness · Cable triceps' },
+  'lateral-raise-machine': { youtubeId: 'yfVBilIb-tI', videoCredit: 'YouTube · Arms & shoulders at VASA Fitness' },
+  'cable-lateral-raise': { youtubeId: 'yfVBilIb-tI', videoCredit: 'YouTube · Arms & shoulders at VASA Fitness' },
+  'lat-pulldown': { youtubeId: 'jDrQTQAL-hI', videoCredit: 'YouTube · VASA Fitness · Back & biceps' },
+  'plate-pulldown': { youtubeId: 'jDrQTQAL-hI', videoCredit: 'YouTube · VASA Fitness · Back & biceps' },
+  'close-grip-pulldown': { youtubeId: 'jDrQTQAL-hI', videoCredit: 'YouTube · VASA Fitness · Back & biceps' },
+  'neutral-grip-pulldown': { youtubeId: 'jDrQTQAL-hI', videoCredit: 'YouTube · VASA Fitness · Back & biceps' },
+  'reverse-grip-pulldown': { youtubeId: 'jDrQTQAL-hI', videoCredit: 'YouTube · VASA Fitness · Back & biceps' },
+  'seated-row': { youtubeId: 'zGyHNKWN_gE', videoCredit: 'YouTube · VASA Fitness coaches · TRX row' },
+  'plate-row': { youtubeId: '9pxF-DebuwA', videoCredit: 'YouTube · VASA Fitness STRONG · Landmine row' },
+  'seated-cable-row': { youtubeId: 'zGyHNKWN_gE', videoCredit: 'YouTube · VASA Fitness coaches · TRX row' },
+  'chest-supported-row': { youtubeId: '9pxF-DebuwA', videoCredit: 'YouTube · VASA Fitness STRONG · Landmine row' },
+  'ez-curl': { youtubeId: 'yfVBilIb-tI', videoCredit: 'YouTube · Arms & shoulders at VASA Fitness' },
+  'curl-machine': { youtubeId: 'yfVBilIb-tI', videoCredit: 'YouTube · Arms & shoulders at VASA Fitness' },
+  'preacher-curl': { youtubeId: 'yfVBilIb-tI', videoCredit: 'YouTube · Arms & shoulders at VASA Fitness' },
+  'cable-rope-curl': { youtubeId: 'yfVBilIb-tI', videoCredit: 'YouTube · Arms & shoulders at VASA Fitness' },
+  'face-pull': { youtubeId: '3ies9IqJlzc', videoCredit: 'YouTube · VASA Fitness · TRX high row' },
+  'reverse-pec-deck': { youtubeId: '3ies9IqJlzc', videoCredit: 'YouTube · VASA Fitness · TRX high row' },
+  'straight-arm-pulldown': { youtubeId: '3ies9IqJlzc', videoCredit: 'YouTube · VASA Fitness · TRX high row' },
+  'back-extension': { youtubeId: 'ysw82jXEMZY', videoCredit: 'YouTube · Legs at VASA' },
+  'squat': { youtubeId: 'Op6aBo7diZA', videoCredit: 'YouTube · VASA Fitness · Pause goblet squat' },
+  'smith-squat': { youtubeId: 'dbkMezAvjGw', videoCredit: 'YouTube · Leg workout at VASA Fitness' },
+  'pin-deadlift': { youtubeId: 'nk2ZhjMPRAw', videoCredit: 'YouTube · VASA Fitness STRONG · Landmine deadlift (hinge, not a floor pull)' },
+  'leg-press': { youtubeId: 'dbkMezAvjGw', videoCredit: 'YouTube · Leg workout at VASA Fitness' },
+  'hamstring-curl': { youtubeId: 'ysw82jXEMZY', videoCredit: 'YouTube · Legs at VASA' },
+  'calf-machine': { youtubeId: 'dbkMezAvjGw', videoCredit: 'YouTube · Leg workout at VASA Fitness' },
+  'hip-abduction': { youtubeId: 'dbkMezAvjGw', videoCredit: 'YouTube · Leg workout at VASA Fitness' },
+  'hip-adduction': { youtubeId: 'dbkMezAvjGw', videoCredit: 'YouTube · Leg workout at VASA Fitness' },
+  'hip-thrust': { youtubeId: 'ysw82jXEMZY', videoCredit: 'YouTube · Legs at VASA' },
+  'leg-extension': { youtubeId: 'dbkMezAvjGw', videoCredit: 'YouTube · Leg workout at VASA Fitness' },
+  'seated-calf': { youtubeId: 'dbkMezAvjGw', videoCredit: 'YouTube · Leg workout at VASA Fitness' },
+  'rdl': { youtubeId: 'a2rKaRV3GtM', videoCredit: 'YouTube · VASA Fitness STRONG · Barbell RDL' },
+  'belt-squat': { youtubeId: 'HWZJ4h-WsXs', videoCredit: 'YouTube · VASA Fitness STRONG · Landmine squat' },
+}
+
+export const EXERCISES: Exercise[] = RAW.map((exercise) => ({
+  ...exercise,
+  ...(YT[exercise.id] ?? {}),
+}))
 
 export const EXERCISE_BY_ID: Record<string, Exercise> = Object.fromEntries(
   EXERCISES.map((exercise) => [exercise.id, exercise]),

@@ -8,17 +8,18 @@ describe('videos', () => {
       for (const block of day.blocks) {
         if (block.kind !== 'lift') continue
         const ex = getExercise(block.exerciseId)
-        expect(ex.vasaUrl || ex.youtubeId || ex.video).toBeTruthy()
+        expect(ex.video).toMatch(/machine\.mp4$/)
       }
     }
   })
 
-  it('VASA urls look like official mp4s', () => {
-    const vasa = EXERCISES.filter((ex) => ex.vasaUrl)
-    expect(vasa.length).toBeGreaterThanOrEqual(8)
-    for (const ex of vasa) {
-      expect(ex.vasaUrl).toMatch(/^https:\/\/media\.vasafitness\.com\/.+\.mp4$/)
-      expect(ex.videoCredit).toBe('VASA Fitness')
+  it('YouTube clips are real VASA-gym videos, not the old blog MP4s', () => {
+    const withYt = EXERCISES.filter((ex) => ex.youtubeId)
+    expect(withYt.length).toBeGreaterThan(20)
+    for (const ex of withYt) {
+      expect(ex.vasaUrl ?? '').not.toMatch(/Selectorized_/)
+      expect(ex.videoCredit ?? '').toMatch(/YouTube/)
+      expect(ex.videoCredit ?? '').toMatch(/VASA/i)
     }
   })
 })

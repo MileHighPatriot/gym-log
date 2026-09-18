@@ -59,7 +59,7 @@ export const SUGGESTIONS: Suggestion[] = [
   {
     id: 'reverse-pec-deck',
     title: 'Rear delt / reverse pec deck',
-    why: 'Later. VASA has a rear-delt clip. Not a second row.',
+    why: 'Later rear-delt work. Not a second row.',
     fitsDayProgramId: 'pull',
     exerciseId: 'reverse-pec-deck',
     sets: 3,
