@@ -44,11 +44,12 @@ export function Calendar({
           const isSelected = date === selected
           const done = completed.has(date)
           const mark = day ? (day.id.startsWith('push') ? 'U' : day.id.startsWith('pull') ? 'P' : 'L') : 'R'
+          const kind = !day ? 'rest' : day.id.startsWith('push') ? 'push' : day.id.startsWith('pull') ? 'pull' : 'legs'
           return (
             <button
               key={date}
               type="button"
-              className={`cal-cell${inMonth ? '' : ' dim'}${isToday ? ' today' : ''}${isSelected ? ' selected' : ''}${done ? ' done' : ''}`}
+              className={`cal-cell kind-${kind}${inMonth ? '' : ' dim'}${isToday ? ' today' : ''}${isSelected ? ' selected' : ''}${done ? ' done' : ''}`}
               onClick={() => onPick(date)}
             >
               <span className="cal-num">{date.slice(8)}</span>
