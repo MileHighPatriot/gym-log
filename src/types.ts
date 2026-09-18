@@ -1,0 +1,135 @@
+export type ExerciseKind = 'lift' | 'walk' | 'mobility'
+
+export type Exercise = {
+  id: string
+  name: string
+  kind: ExerciseKind
+  equipment: string
+  muscles: string[]
+  cues: string[]
+  setupImage: string
+  finishImage: string
+  video: string
+  substituteIds: string[]
+}
+
+export type WalkBlock = {
+  id: string
+  kind: 'walk'
+  label: string
+  durationSec: number
+  durationMaxSec?: number
+}
+
+export type LiftBlock = {
+  id: string
+  kind: 'lift'
+  exerciseId: string
+  sets: number
+  repMin: number
+  repMax: number
+  restSec: number
+  notes?: string
+  loadNote?: string
+}
+
+export type ProgramBlock = WalkBlock | LiftBlock
+
+export type DayProgram = {
+  id: string
+  title: string
+  subtitle: string
+  blocks: ProgramBlock[]
+}
+
+export type ScheduleSlot = {
+  weekday: number
+  dayProgramId: string | null
+  window: string
+  notes?: string
+}
+
+export type LoggedSet = {
+  weight: number | null
+  reps: number | null
+  done: boolean
+}
+
+export type LoggedBlock =
+  | {
+      id: string
+      kind: 'walk'
+      label: string
+      durationSec: number
+      durationMaxSec?: number
+      elapsedSec: number
+      done: boolean
+    }
+  | {
+      id: string
+      kind: 'lift'
+      exerciseId: string
+      substituteOf?: string
+      sets: number
+      repMin: number
+      repMax: number
+      restSec: number
+      notes?: string
+      loadNote?: string
+      logged: LoggedSet[]
+    }
+
+export type SessionLog = {
+  id: string
+  date: string
+  weekday: number
+  dayProgramId: string
+  startedAt: string
+  endedAt?: string
+  blocks: LoggedBlock[]
+  notes?: string
+}
+
+export type BodyWeight = {
+  date: string
+  lbs: number
+}
+
+export type Suggestion = {
+  id: string
+  title: string
+  why: string
+  fitsDayProgramId: string
+  exerciseId: string
+  sets: number
+  repMin: number
+  repMax: number
+  restSec: number
+}
+
+export type PinnedSuggestion = {
+  suggestionId: string
+  dayProgramId: string
+}
+
+export type BackupPayload = {
+  version: 1
+  exportedAt: string
+  programOverride: DayProgram[] | null
+  logs: SessionLog[]
+  activeSession: SessionLog | null
+  bodyWeight: BodyWeight[]
+  dismissedSuggestions: string[]
+  pinnedSuggestions: PinnedSuggestion[]
+}
+
+export type AppState = {
+  programOverride: DayProgram[] | null
+  logs: SessionLog[]
+  activeSession: SessionLog | null
+  bodyWeight: BodyWeight[]
+  dismissedSuggestions: string[]
+  pinnedSuggestions: PinnedSuggestion[]
+}
+
+export type Tab = 'today' | 'exercises' | 'progress' | 'try' | 'program'
