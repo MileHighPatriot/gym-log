@@ -9,20 +9,13 @@ export function ExerciseMedia({
   exercise: Exercise
   compact?: boolean
 }) {
-  const [which, setWhich] = useState<'setup' | 'finish' | 'video'>('setup')
+  const [which, setWhich] = useState<'setup' | 'finish' | 'video'>('video')
   const [broken, setBroken] = useState<Record<string, boolean>>({})
 
   return (
     <div className={compact ? 'media compact' : 'media'}>
       <div className="media-frame">
-        {which === 'video' && exercise.youtubeId && !broken.youtube ? (
-          <iframe
-            title={`${exercise.name} tutorial`}
-            src={`https://www.youtube.com/embed/${exercise.youtubeId}`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        ) : which === 'video' && !broken.video ? (
+        {which === 'video' && !broken.video ? (
           <video
             key={exercise.video}
             src={exercise.video}
@@ -43,19 +36,6 @@ export function ExerciseMedia({
           />
         )}
       </div>
-      {exercise.videoCredit && which === 'video' && (
-        <p className="muted">
-          {exercise.videoCredit}
-          {exercise.youtubeId && (
-            <>
-              {' · '}
-              <a href={`https://www.youtube.com/watch?v=${exercise.youtubeId}`} target="_blank" rel="noreferrer">
-                Open on YouTube
-              </a>
-            </>
-          )}
-        </p>
-      )}
       <div className="media-tabs">
         <button type="button" className={which === 'setup' ? 'on' : ''} onClick={() => setWhich('setup')}>
           Setup
@@ -64,7 +44,7 @@ export function ExerciseMedia({
           Finish
         </button>
         <button type="button" className={which === 'video' ? 'on' : ''} onClick={() => setWhich('video')}>
-          {exercise.youtubeId ? 'Tutorial' : 'Video'}
+          How to
         </button>
       </div>
     </div>

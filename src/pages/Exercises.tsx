@@ -76,7 +76,6 @@ export function ExercisesPage() {
         )}
         <p className="muted">
           {exercise.role === 'card' ? 'On your card' : exercise.role === 'swap' ? 'Swap if a station is taken' : 'Later — not on the main card'}
-          {exercise.videoCredit ? ` · ${exercise.videoCredit} video` : ''}
         </p>
       </section>
     )
