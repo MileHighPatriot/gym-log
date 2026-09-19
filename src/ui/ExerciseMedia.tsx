@@ -17,7 +17,7 @@ export function ExerciseMedia({
       <div className="media-frame">
         {which === 'video' && exercise.youtubeId && !broken.youtube ? (
           <iframe
-            title={`${exercise.name} at VASA`}
+            title={`${exercise.name} tutorial`}
             src={`https://www.youtube.com/embed/${exercise.youtubeId}`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -64,7 +64,7 @@ export function ExerciseMedia({
           Finish
         </button>
         <button type="button" className={which === 'video' ? 'on' : ''} onClick={() => setWhich('video')}>
-          {exercise.youtubeId ? 'YouTube · VASA' : 'Video'}
+          {exercise.youtubeId ? 'Tutorial' : 'Video'}
         </button>
       </div>
     </div>
