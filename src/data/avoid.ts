@@ -11,7 +11,7 @@ export const AVOID: AvoidItem[] = [
     id: 'bounce-bench',
     name: 'Bouncing the bar off the chest',
     dayGroup: 'push',
-    why: 'Pause or touch-and-go with control. If it is bouncing, use paused bench from Try next.',
+    why: 'You are on machines now. No barbell bench, no bouncing a bar.',
   },
   {
     id: 'shrugs',
@@ -29,7 +29,7 @@ export const AVOID: AvoidItem[] = [
     id: 'bb-row-floor',
     name: 'Bent-over barbell row from the floor',
     dayGroup: 'pull',
-    why: 'Skip it. Use the chest-pad row or one plate-loaded row — not a floor row.',
+    why: 'No barbells. Use the chest-pad row or one plate-loaded row.',
   },
   {
     id: 'unassisted-pullup',
@@ -47,19 +47,19 @@ export const AVOID: AvoidItem[] = [
     id: 'walking-lunges',
     name: 'Walking lunges',
     dayGroup: 'legs',
-    why: 'Off the card. Use box squat, smith squat, or leg press.',
+    why: 'Off the card. Use belt squat, hip thrust, or leg press.',
   },
   {
     id: 'deep-free-squat',
     name: 'Deep free barbell squat',
     dayGroup: 'legs',
-    why: 'Box squat or smith squat instead. Sit to the box; do not chase depth without it.',
+    why: 'No barbell squat. Belt squat or extra leg press.',
   },
   {
     id: 'floor-deadlift',
     name: 'Deadlift off the floor',
     dayGroup: 'legs',
-    why: 'Rack pull / block pull only. Bar starts at mid-shin.',
+    why: 'No barbell. Hip-thrust machine is the hinge. Not off the floor.',
   },
   {
     id: 'jumps',
@@ -78,5 +78,11 @@ export const AVOID: AvoidItem[] = [
     name: 'Stair mill',
     dayGroup: 'legs',
     why: 'Skip it. Walk on the floor or a treadmill.',
+  },
+  {
+    id: 'barbell-work',
+    name: 'Barbell, EZ-bar, or Smith bar',
+    dayGroup: 'other',
+    why: 'Machines and cables only. No barbell on any lift.',
   },
 ]

@@ -5,11 +5,11 @@ describe('backup', () => {
   it('round-trips state', () => {
     const state = emptyState()
     state.bodyWeight = [{ date: '2026-09-21', lbs: 198 }]
-    state.dismissedSuggestions = ['rdl']
+    state.dismissedSuggestions = ['face-pull']
     const raw = JSON.stringify(toBackup(state))
     expect(parseBackup(raw)).toMatchObject({
       bodyWeight: [{ date: '2026-09-21', lbs: 198 }],
-      dismissedSuggestions: ['rdl'],
+      dismissedSuggestions: ['face-pull'],
       logs: [],
     })
   })

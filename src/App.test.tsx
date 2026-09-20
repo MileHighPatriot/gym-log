@@ -61,10 +61,10 @@ describe('Gym Log app', () => {
   it('pins a suggestion onto a day', () => {
     render()
     click('Try')
-    expect(el.textContent).toMatch(/Paused bench/)
+    expect(el.textContent).toMatch(/Pec deck/)
     click('Pin to Push')
     expect(el.textContent).toMatch(/Pinned/)
     const raw = localStorage.getItem(STORAGE_KEY)
-    expect(raw).toMatch(/paused-bench/)
+    expect(raw).toMatch(/pec-deck/)
   })
 })

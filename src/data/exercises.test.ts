@@ -36,8 +36,8 @@ describe('exercise library', () => {
       'lat-pulldown',
       'seated-row',
       'plate-pulldown',
-      'ez-curl',
       'curl-machine',
+      'preacher-curl',
     ])
   })
 
