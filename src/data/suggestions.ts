@@ -1,5 +1,9 @@
 import type { Suggestion } from '../types.ts'
 
+export function laterCount(dismissed: string[]): number {
+  return SUGGESTIONS.filter((s) => !dismissed.includes(s.id)).length
+}
+
 export const SUGGESTIONS: Suggestion[] = [
   {
     id: 'pec-deck',

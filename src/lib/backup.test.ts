@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { emptyState, parseBackup, toBackup } from './backup.ts'
+import { backupOverdue, emptyState, parseBackup, toBackup } from './backup.ts'
 import { GEMINI_KEY_STORAGE } from './gemini.ts'
 
 describe('backup', () => {
@@ -51,6 +51,23 @@ describe('backup', () => {
     expect(JSON.stringify(payload)).not.toMatch(/gemini|AIza/i)
     expect(parseBackup(JSON.stringify(payload)).foodEntries).toHaveLength(1)
     expect(GEMINI_KEY_STORAGE).toBe('gym-log-gemini-key')
+  })
+
+  it('defaults settings for old backups and round-trips new ones', () => {
+    const old = JSON.stringify({ version: 1, exportedAt: '', programOverride: null, logs: [] })
+    expect(parseBackup(old).settings).toMatchObject({ onboarded: false, offDays: [], programVersion: 1 })
+    const state = emptyState()
+    state.settings = { ...state.settings, offDays: [5], deloadWeek: '2026-09-21', goal: 'cut', favoriteFoods: ['Whole egg'] }
+    const back = parseBackup(JSON.stringify(toBackup(state)))
+    expect(back.settings).toMatchObject({ offDays: [5], deloadWeek: '2026-09-21', goal: 'cut', favoriteFoods: ['Whole egg'] })
+  })
+
+  it('knows when a backup is overdue', () => {
+    const now = new Date('2026-09-20T12:00:00Z')
+    expect(backupOverdue(2, null, now)).toBe(false)
+    expect(backupOverdue(3, null, now)).toBe(true)
+    expect(backupOverdue(3, '2026-09-10T12:00:00Z', now)).toBe(false)
+    expect(backupOverdue(3, '2026-09-01T12:00:00Z', now)).toBe(true)
   })
 
   it('rejects garbage', () => {

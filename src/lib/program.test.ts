@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { getExercise } from '../data/exercises.ts'
-import { DAYS, SCHEDULE, slotForWeekday } from '../data/program.ts'
+import { DAYS, SCHEDULE, WALK_DAY, missedDay, nextTrainingDay, scheduledDay, slotForWeekday } from '../data/program.ts'
 
 function liftIds(dayId: string) {
   const day = DAYS.find((d) => d.id === dayId)!
@@ -78,5 +78,27 @@ describe('program seed', () => {
 
   it('covers every weekday', () => {
     expect(SCHEDULE.map((s) => s.weekday).sort()).toEqual([0, 1, 2, 3, 4, 5, 6])
+  })
+
+  it('honors off days and finds the next training day', () => {
+    // 2026-09-21 is a Monday
+    expect(scheduledDay('2026-09-21', DAYS)?.id).toBe('push-a')
+    expect(scheduledDay('2026-09-21', DAYS, [1])).toBeNull()
+    expect(nextTrainingDay('2026-09-20', DAYS)?.day.id).toBe('push-a')
+    expect(nextTrainingDay('2026-09-20', DAYS, [1])?.day.id).toBe('pull-a')
+  })
+
+  it('flags the most recent missed day only once you have trained before', () => {
+    // 2026-09-23 is a Wednesday; Monday and Tuesday are scheduled
+    expect(missedDay('2026-09-23', DAYS, new Set())).toBeNull()
+    expect(missedDay('2026-09-23', DAYS, new Set(['2026-09-14']))?.day.id).toBe('pull-a')
+    expect(missedDay('2026-09-23', DAYS, new Set(['2026-09-14', '2026-09-22']))?.day.id).toBe('push-a')
+    expect(missedDay('2026-09-23', DAYS, new Set(['2026-09-14', '2026-09-22', '2026-09-21']))).toBeNull()
+    expect(missedDay('2026-09-23', DAYS, new Set(['2026-09-14']), [2])?.day.id).toBe('push-a')
+  })
+
+  it('ships a walk-only day with no lifts', () => {
+    expect(WALK_DAY.blocks.every((b) => b.kind === 'walk')).toBe(true)
+    expect(slotForWeekday(5).slots?.length).toBe(2)
   })
 })

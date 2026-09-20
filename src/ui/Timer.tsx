@@ -1,21 +1,20 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { formatClock } from '../lib/dates.ts'
+import { BUZZ, askNotify, beep, buzz, notify, notifyPermission } from '../lib/haptics.ts'
 
-export function useCountdown(running: boolean, seconds: number, onDone?: () => void) {
+/** Counts down from `seconds` once, starting on mount. Remount to restart. */
+function useCountdown(seconds: number, onDone?: () => void) {
   const [left, setLeft] = useState(seconds)
   const done = useRef(onDone)
-  done.current = onDone
 
   useEffect(() => {
-    setLeft(seconds)
-  }, [seconds, running])
+    done.current = onDone
+  }, [onDone])
 
   useEffect(() => {
-    if (!running) return
     const started = Date.now()
-    const startLeft = seconds
     const id = window.setInterval(() => {
-      const next = Math.max(0, startLeft - Math.floor((Date.now() - started) / 1000))
+      const next = Math.max(0, seconds - Math.floor((Date.now() - started) / 1000))
       setLeft(next)
       if (next <= 0) {
         window.clearInterval(id)
@@ -23,38 +22,62 @@ export function useCountdown(running: boolean, seconds: number, onDone?: () => v
       }
     }, 200)
     return () => window.clearInterval(id)
-  }, [running, seconds])
+  }, [seconds])
 
   return left
 }
 
 export function RestOverlay({
   seconds,
+  nextUp,
   onSkip,
+  onUndo,
 }: {
   seconds: number
+  nextUp?: string
   onSkip: () => void
+  /** Unchecks the set that started this rest. */
+  onUndo?: () => void
 }) {
-  const left = useCountdown(true, seconds)
-  useEffect(() => {
-    if (left !== 0) return
-    if (navigator.vibrate) navigator.vibrate([80, 40, 80])
-    onSkip()
-  }, [left, onSkip])
-
+  const [perm, setPerm] = useState(notifyPermission)
+  const left = useCountdown(seconds, () => {
+    buzz(BUZZ.restDone)
+    beep()
+    notify('Rest done', nextUp ? `Next up ${nextUp}` : undefined)
+  })
+  const over = left === 0
   const pct = seconds > 0 ? (left / seconds) * 100 : 0
 
   return (
-    <div className="rest-overlay">
-      <p className="eyebrow">Rest</p>
+    <div className={`rest-overlay${over ? ' over' : ''}`}>
+      <p className="eyebrow">{over ? 'Go' : 'Rest'}</p>
       <div className="rest-ring" style={{ '--p': pct } as CSSProperties}>
         <div className="rest-ring-inner">
           <strong>{formatClock(left)}</strong>
         </div>
       </div>
+      {nextUp && <p className="rest-next">Next up {nextUp}</p>}
       <button type="button" className="primary" onClick={onSkip}>
-        Skip rest
+        {over ? 'Next set' : 'Skip rest'}
       </button>
+      <div className="row rest-tools">
+        {onUndo && (
+          <button type="button" className="ghost" onClick={onUndo}>
+            Undo set
+          </button>
+        )}
+        {perm === 'default' && (
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => {
+              void askNotify().then(setPerm)
+            }}
+          >
+            Buzz when screen is off
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -75,20 +98,23 @@ export function WalkTimer({
   onDone: () => void
 }) {
   const [running, setRunning] = useState(false)
-  const base = useRef(elapsedSec)
-  const startedAt = useRef<number | null>(null)
+  const elapsedRef = useRef(elapsedSec)
   const onElapsedRef = useRef(onElapsed)
   const onDoneRef = useRef(onDone)
-  onElapsedRef.current = onElapsed
-  onDoneRef.current = onDone
   const target = durationMaxSec ?? durationSec
 
   useEffect(() => {
+    elapsedRef.current = elapsedSec
+    onElapsedRef.current = onElapsed
+    onDoneRef.current = onDone
+  }, [elapsedSec, onElapsed, onDone])
+
+  useEffect(() => {
     if (!running) return
-    startedAt.current = Date.now()
-    base.current = elapsedSec
+    const startedAt = Date.now()
+    const base = elapsedRef.current
     const id = window.setInterval(() => {
-      const next = base.current + Math.floor((Date.now() - (startedAt.current ?? Date.now())) / 1000)
+      const next = base + Math.floor((Date.now() - startedAt) / 1000)
       onElapsedRef.current(next)
       if (next >= target) {
         window.clearInterval(id)
@@ -97,7 +123,6 @@ export function WalkTimer({
       }
     }, 200)
     return () => window.clearInterval(id)
-    // elapsedSec is captured when running flips on
   }, [running, target])
 
   const shown = Math.min(elapsedSec, target)

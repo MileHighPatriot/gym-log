@@ -61,12 +61,17 @@ export type ScheduleSlot = {
   dayProgramId: string | null
   window: string
   notes?: string
+  /** Split days: e.g. a.m. walk, p.m. lift. */
+  slots?: { label: string; window: string }[]
 }
+
+export type Rpe = 'easy' | 'ok' | 'hard'
 
 export type LoggedSet = {
   weight: number | null
   reps: number | null
   done: boolean
+  rpe?: Rpe
 }
 
 export type LoggedBlock =
@@ -102,6 +107,9 @@ export type SessionLog = {
   endedAt?: string
   blocks: LoggedBlock[]
   notes?: string
+  /** Week-card version this session was built from. */
+  programVersion?: number
+  deload?: boolean
 }
 
 export type BodyWeight = {
@@ -118,7 +126,9 @@ export type FoodItem = {
   protein: number
 }
 
-export type FoodSource = 'search' | 'custom' | 'photo'
+export type FoodSource = 'search' | 'custom' | 'photo' | 'label' | 'repeat'
+
+export type Meal = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 
 export type FoodEntry = {
   id: string
@@ -129,6 +139,21 @@ export type FoodEntry = {
   kcal: number
   protein: number
   source: FoodSource
+  meal?: Meal
+}
+
+export type Goal = 'hold' | 'cut' | 'gain'
+
+export type Settings = {
+  onboarded: boolean
+  /** Weekdays (0–6) you never train, even if the card says so. */
+  offDays: number[]
+  /** Monday ISO of the week that is a deload, or null. */
+  deloadWeek: string | null
+  /** Bumps every time the Week card is edited. */
+  programVersion: number
+  favoriteFoods: string[]
+  goal: Goal | null
 }
 
 export type DietGoals = {
@@ -164,6 +189,7 @@ export type BackupPayload = {
   pinnedSuggestions: PinnedSuggestion[]
   foodEntries: FoodEntry[]
   dietGoals: DietGoals
+  settings?: Settings
 }
 
 export type AppState = {
@@ -175,6 +201,7 @@ export type AppState = {
   pinnedSuggestions: PinnedSuggestion[]
   foodEntries: FoodEntry[]
   dietGoals: DietGoals
+  settings: Settings
 }
 
-export type Tab = 'today' | 'exercises' | 'progress' | 'try' | 'program'
+export type Tab = 'today' | 'eat' | 'exercises' | 'progress' | 'program'

@@ -1,11 +1,21 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { DAYS } from '../data/program.ts'
+import { DAYS, WALK_DAY } from '../data/program.ts'
 import { SUGGESTIONS } from '../data/suggestions.ts'
 import { loadState, saveState, parseBackup, toBackup } from '../lib/backup.ts'
-import { localISODate, weekdayOf } from '../lib/dates.ts'
-import { lastByExercise, startSession as buildSession, swapLift } from '../lib/session.ts'
+import { addDays, localISODate, mondayOfWeek, weekdayOf } from '../lib/dates.ts'
+import { repeatDay } from '../lib/diet.ts'
+import { lastByExercise, lastSetsByExercise, startSession as buildSession, swapLift } from '../lib/session.ts'
 import { tabFromLocation } from '../lib/hash.ts'
-import type { AppState, DayProgram, DietGoals, FoodEntry, LiftBlock, SessionLog, Tab } from '../types.ts'
+import type {
+  AppState,
+  DayProgram,
+  DietGoals,
+  FoodEntry,
+  LiftBlock,
+  SessionLog,
+  Settings,
+  Tab,
+} from '../types.ts'
 
 type StoreApi = {
   state: AppState
@@ -18,16 +28,22 @@ type StoreApi = {
   openSession: (id: string | null) => void
   justFinished: SessionLog | null
   dismissFinished: () => void
-  eatOpen: boolean
   openEat: (open: boolean) => void
   logFood: (entry: Omit<FoodEntry, 'id'> & { id?: string }) => void
   removeFood: (id: string) => void
+  repeatYesterday: () => number
+  toggleFavoriteFood: (name: string) => void
   setDietGoals: (goals: DietGoals) => void
+  updateSettings: (patch: Partial<Settings>) => void
+  /** True when this week is the deload week. */
+  deloadOn: boolean
+  setDeload: (on: boolean) => void
   days: DayProgram[]
   today: string
   selectedDate: string
   setSelectedDate: (date: string) => void
   startWorkout: (day: DayProgram, date?: string) => void
+  startWalk: () => void
   resumeWorkout: () => void
   leaveWorkout: () => void
   updateActive: (session: SessionLog) => void
@@ -54,15 +70,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [sessionView, setSessionView] = useState(false)
   const [reviewSessionId, setReviewSessionId] = useState<string | null>(null)
   const [justFinished, setJustFinished] = useState<SessionLog | null>(null)
-  const [eatOpen, setEatOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState(() => localISODate())
 
   useEffect(() => {
     saveState(state)
   }, [state])
 
-  const days = state.programOverride ?? DAYS
+  const days = useMemo(() => [...(state.programOverride ?? DAYS), WALK_DAY], [state.programOverride])
   const today = localISODate()
+  const deloadOn = state.settings.deloadWeek === mondayOfWeek(today)
 
   const api = useMemo<StoreApi>(() => {
     const extrasFor = (dayId: string): LiftBlock[] =>
@@ -79,11 +95,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             repMin: suggestion.repMin,
             repMax: suggestion.repMax,
             restSec: suggestion.restSec,
-            notes: 'Pinned from Try next.',
+            notes: 'Pinned from Later.',
           }
           return block
         })
         .filter((block): block is LiftBlock => block != null)
+
+    const begin = (day: DayProgram, date: string) => {
+      const session = buildSession({
+        day,
+        date,
+        weekday: weekdayOf(date),
+        lastByExercise: lastByExercise(state.logs),
+        lastSetsByExercise: lastSetsByExercise(state.logs),
+        extraBlocks: day.id === WALK_DAY.id ? [] : extrasFor(day.id),
+        deload: deloadOn,
+        programVersion: state.settings.programVersion,
+      })
+      setState((s) => ({ ...s, activeSession: session }))
+      setJustFinished(null)
+      setReviewSessionId(null)
+      setSessionView(true)
+      setTab('today')
+    }
 
     return {
       state,
@@ -103,9 +137,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       dismissFinished() {
         setJustFinished(null)
       },
-      eatOpen,
       openEat(open) {
-        setEatOpen(open)
+        setTab(open ? 'eat' : 'today')
       },
       logFood(entry) {
         const next: FoodEntry = { ...entry, id: entry.id ?? `${entry.date}-${Date.now()}` }
@@ -114,10 +147,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeFood(id) {
         setState((s) => ({ ...s, foodEntries: s.foodEntries.filter((row) => row.id !== id) }))
       },
+      repeatYesterday() {
+        const copies = repeatDay(state.foodEntries, addDays(today, -1), today)
+        if (copies.length) setState((s) => ({ ...s, foodEntries: [...s.foodEntries, ...copies] }))
+        return copies.length
+      },
+      toggleFavoriteFood(name) {
+        setState((s) => {
+          const has = s.settings.favoriteFoods.includes(name)
+          return {
+            ...s,
+            settings: {
+              ...s.settings,
+              favoriteFoods: has
+                ? s.settings.favoriteFoods.filter((n) => n !== name)
+                : [...s.settings.favoriteFoods, name],
+            },
+          }
+        })
+      },
       setDietGoals(goals) {
         setState((s) => ({
           ...s,
           dietGoals: { kcal: Math.max(0, Math.round(goals.kcal)), protein: Math.max(0, Math.round(goals.protein)) },
+        }))
+      },
+      updateSettings(patch) {
+        setState((s) => ({ ...s, settings: { ...s.settings, ...patch } }))
+      },
+      deloadOn,
+      setDeload(on) {
+        setState((s) => ({
+          ...s,
+          settings: { ...s.settings, deloadWeek: on ? mondayOfWeek(today) : null },
         }))
       },
       days,
@@ -125,18 +187,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       selectedDate,
       setSelectedDate,
       startWorkout(day, date = today) {
-        const session = buildSession({
-          day,
-          date,
-          weekday: weekdayOf(date),
-          lastByExercise: lastByExercise(state.logs),
-          extraBlocks: extrasFor(day.id),
-        })
-        setState((s) => ({ ...s, activeSession: session }))
-        setJustFinished(null)
-        setReviewSessionId(null)
-        setSessionView(true)
-        setTab('today')
+        begin(day, date)
+      },
+      startWalk() {
+        begin(WALK_DAY, today)
       },
       resumeWorkout() {
         setReviewSessionId(null)
@@ -209,11 +263,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateDay(day) {
         setState((s) => {
           const base = s.programOverride ?? DAYS
-          return { ...s, programOverride: base.map((d) => (d.id === day.id ? day : d)) }
+          return {
+            ...s,
+            programOverride: base.map((d) => (d.id === day.id ? day : d)),
+            settings: { ...s.settings, programVersion: s.settings.programVersion + 1 },
+          }
         })
       },
       resetProgram() {
-        setState((s) => ({ ...s, programOverride: null }))
+        setState((s) => ({
+          ...s,
+          programOverride: null,
+          settings: { ...s.settings, programVersion: s.settings.programVersion + 1 },
+        }))
       },
       exportBackup() {
         return JSON.stringify(toBackup(state), null, 2)
@@ -222,11 +284,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setState(parseBackup(raw))
       },
     }
-  }, [state, tab, exerciseId, sessionView, reviewSessionId, justFinished, eatOpen, days, today, selectedDate])
+  }, [state, tab, exerciseId, sessionView, reviewSessionId, justFinished, days, today, selectedDate, deloadOn])
 
   return <StoreContext.Provider value={api}>{children}</StoreContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useStore() {
   const ctx = useContext(StoreContext)
   if (!ctx) throw new Error('useStore outside provider')

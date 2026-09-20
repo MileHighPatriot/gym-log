@@ -39,7 +39,7 @@ export function ExercisesPage() {
     return (
       <section className="page">
         <button type="button" className="ghost" onClick={() => openExercise(null)}>
-          ← Lifts
+          ← Library
         </button>
         <header className="page-head">
           <p className="eyebrow">{exercise.equipment}</p>
@@ -84,8 +84,8 @@ export function ExercisesPage() {
   return (
     <section className="page">
       <header className="page-head">
-        <p className="eyebrow">Library</p>
-        <h1>Lifts</h1>
+        <p className="eyebrow">Every lift · how-to · last · PR</p>
+        <h1>Library</h1>
       </header>
       <input
         className="search"

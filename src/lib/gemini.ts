@@ -30,7 +30,22 @@ export async function fileToInline(file: File): Promise<{ mime: string; data: st
   return { mime: file.type || 'image/jpeg', data: btoa(binary) }
 }
 
-export async function estimateFoodPhoto(file: File, key: string): Promise<PhotoGuess[]> {
+const PLATE_PROMPT =
+  'Estimate the foods on this plate. Return JSON only: {"items":[{"name":"","grams":0,"kcal":0,"protein":0,"confidence":0}]}. confidence is 0-1. Be conservative. If unsure, still guess one item.'
+
+const LABEL_PROMPT =
+  'This is a photo of a nutrition facts label and/or product front. Read it. Return JSON only: {"items":[{"name":"","grams":0,"kcal":0,"protein":0,"confidence":0}]} with exactly one item for ONE serving: name is the product, grams is the serving size in grams (0 if not shown), kcal is calories per serving, protein is grams of protein per serving, confidence is 0-1 for how legible the label was.'
+
+export function estimateFoodPhoto(file: File, key: string): Promise<PhotoGuess[]> {
+  return askGemini(file, key, PLATE_PROMPT)
+}
+
+/** Reads a nutrition label. One item, per serving. */
+export function readFoodLabel(file: File, key: string): Promise<PhotoGuess[]> {
+  return askGemini(file, key, LABEL_PROMPT)
+}
+
+async function askGemini(file: File, key: string, prompt: string): Promise<PhotoGuess[]> {
   const { mime, data } = await fileToInline(file)
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
@@ -40,12 +55,7 @@ export async function estimateFoodPhoto(file: File, key: string): Promise<PhotoG
       body: JSON.stringify({
         contents: [
           {
-            parts: [
-              {
-                text: 'Estimate the foods on this plate. Return JSON only: {"items":[{"name":"","grams":0,"kcal":0,"protein":0,"confidence":0}]}. confidence is 0-1. Be conservative. If unsure, still guess one item.',
-              },
-              { inline_data: { mime_type: mime, data } },
-            ],
+            parts: [{ text: prompt }, { inline_data: { mime_type: mime, data } }],
           },
         ],
         generationConfig: { responseMimeType: 'application/json' },

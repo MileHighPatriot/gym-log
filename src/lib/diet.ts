@@ -1,4 +1,52 @@
-import type { DietGoals, FoodEntry, FoodItem } from '../types.ts'
+import type { DietGoals, FoodEntry, FoodItem, Meal } from '../types.ts'
+
+export const MEALS: Meal[] = ['breakfast', 'lunch', 'dinner', 'snack']
+
+/** Default meal bucket from the clock. */
+export function mealForHour(hour: number): Meal {
+  if (hour < 10) return 'breakfast'
+  if (hour < 14) return 'lunch'
+  if (hour < 20) return 'dinner'
+  return 'snack'
+}
+
+export function groupByMeal(entries: FoodEntry[]): Record<Meal, FoodEntry[]> {
+  const out: Record<Meal, FoodEntry[]> = { breakfast: [], lunch: [], dinner: [], snack: [] }
+  for (const row of entries) out[row.meal ?? 'snack'].push(row)
+  return out
+}
+
+export type RecentFood = Pick<FoodItem, 'name' | 'grams' | 'kcal' | 'protein'> & { count: number }
+
+/** Distinct foods you have logged, per single serving, most recent first. */
+export function recentFoods(entries: FoodEntry[], limit = 8): RecentFood[] {
+  const seen = new Map<string, RecentFood>()
+  for (const row of [...entries].reverse()) {
+    const key = row.name.trim().toLowerCase()
+    if (!key) continue
+    const servings = row.servings > 0 ? row.servings : 1
+    const cur = seen.get(key)
+    if (cur) {
+      cur.count += 1
+      continue
+    }
+    seen.set(key, {
+      name: row.name,
+      grams: Math.round(row.grams / servings),
+      kcal: Math.round(row.kcal / servings),
+      protein: Math.round((row.protein / servings) * 10) / 10,
+      count: 1,
+    })
+  }
+  return [...seen.values()].slice(0, limit)
+}
+
+/** Copies of `from`-day entries stamped for `to`. Ids are fresh. */
+export function repeatDay(entries: FoodEntry[], from: string, to: string): FoodEntry[] {
+  return entries
+    .filter((row) => row.date === from)
+    .map((row, i) => ({ ...row, id: `${to}-repeat-${Date.now()}-${i}`, date: to, source: 'repeat' as const }))
+}
 
 export function suggestedProtein(lbs: number): number {
   return Math.round(lbs * 0.8)

@@ -33,6 +33,17 @@ export function weekDates(iso: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(monday, i))
 }
 
+export function sundayOfWeek(iso: string): string {
+  const date = parseISODate(iso)
+  date.setDate(date.getDate() - date.getDay())
+  return localISODate(date)
+}
+
+export function sundayWeekDates(iso: string): string[] {
+  const start = sundayOfWeek(iso)
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i))
+}
+
 export function formatRest(sec: number): string {
   if (sec <= 0) return '0s'
   if (sec < 60) return `${sec}s`

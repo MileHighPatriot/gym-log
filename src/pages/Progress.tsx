@@ -1,13 +1,26 @@
 import { useMemo, useState } from 'react'
 import { EXERCISE_BY_ID } from '../data/exercises.ts'
-import { WEEKDAY_SHORT, programLabel } from '../data/program.ts'
-import { formatDuration, weekDates, weekdayOf } from '../lib/dates.ts'
+import { WEEKDAY_SHORT, dayKindFromId, programLabel } from '../data/program.ts'
+import { backupOverdue, loadLastExport, markExported } from '../lib/backup.ts'
+import {
+  bestLiftsThisWeek,
+  epley,
+  kindVolumeThisWeek,
+  rollingAverage,
+  sortedWeights,
+  trainStreak,
+  weekCompare,
+  weightSlopePerWeek,
+} from '../lib/coach.ts'
+import { formatDuration, weekdayOf } from '../lib/dates.ts'
 import { historyForExercise, recordsFromLogs, volumeForLog } from '../lib/prs.ts'
 import { useStore } from '../state/Store.tsx'
+import { InstallBanner } from '../ui/Install.tsx'
+import { WeekRecapCard } from '../ui/WeekRecapCard.tsx'
 import { WeekStrip } from '../ui/WeekStrip.tsx'
 import { SessionReview } from './SessionReview.tsx'
-import { EatPage } from './Eat.tsx'
-import { totalsForDate } from '../lib/diet.ts'
+
+type KindFilter = 'all' | 'push' | 'pull' | 'legs' | 'walk'
 
 export function ProgressPage() {
   const {
@@ -23,24 +36,30 @@ export function ProgressPage() {
     openExercise,
     setSelectedDate,
     setTab,
-    eatOpen,
-    openEat,
   } = useStore()
   const [lbs, setLbs] = useState('')
   const [picked, setPicked] = useState<string | null>(null)
-  const completed = new Set(state.logs.filter((l) => l.endedAt).map((l) => l.date))
+  const [kindFilter, setKindFilter] = useState<KindFilter>('all')
+  const [lastExport, setLastExport] = useState<string | null>(() => loadLastExport())
+  const finished = state.logs.filter((l) => l.endedAt)
+  const completed = new Set(finished.filter((l) => l.blocks.some((b) => b.kind === 'lift')).map((l) => l.date))
   const records = recordsFromLogs(state.logs)
-  const thisWeek = weekDates(today)
-  const weekVolume = state.logs
-    .filter((l) => l.endedAt && thisWeek.includes(l.date))
-    .reduce((sum, l) => sum + volumeForLog(l), 0)
+  const streak = trainStreak(state.logs, today)
+  const compare = weekCompare(state.logs, today)
+  const best = bestLiftsThisWeek(state.logs, today)
+  const balance = kindVolumeThisWeek(state.logs, today, dayKindFromId)
+  const balanceMax = Math.max(1, balance.push, balance.pull, balance.legs)
+  const weights = sortedWeights(state.bodyWeight)
+  const avg7 = rollingAverage(state.bodyWeight, today)
+  const slope = weightSlopePerWeek(weights.slice(-8))
+  const overdue = backupOverdue(finished.length, lastExport)
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
 
   const history = useMemo(
     () => (picked ? historyForExercise(state.logs, picked) : []),
     [picked, state.logs],
   )
-
-  if (eatOpen) return <EatPage />
+  const e1rm = history.map((h) => epley(h.bestWeight, h.bestReps))
 
   const review = reviewSessionId ? state.logs.find((l) => l.id === reviewSessionId) : null
   if (review) {
@@ -48,25 +67,83 @@ export function ProgressPage() {
       <SessionReview
         session={review}
         day={days.find((d) => d.id === review.dayProgramId)}
+        currentVersion={state.settings.programVersion}
         onBack={() => openSession(null)}
         onOpenExercise={openExercise}
       />
     )
   }
 
+  const backupFile = () => new File([exportBackup()], `gym-log-${today}.json`, { type: 'application/json' })
+
+  const exported = () => {
+    const now = new Date().toISOString()
+    markExported(now)
+    setLastExport(now)
+  }
+
+  const download = () => {
+    const url = URL.createObjectURL(backupFile())
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `gym-log-${today}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    exported()
+  }
+
+  const share = async () => {
+    const file = backupFile()
+    try {
+      if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+        download()
+        return
+      }
+      await navigator.share({ files: [file], title: 'Gym Log backup' })
+      exported()
+    } catch {
+      /* user cancelled */
+    }
+  }
+
+  const visibleSessions = [...finished]
+    .reverse()
+    .filter((l) => {
+      if (kindFilter === 'all') return true
+      const kind = dayKindFromId(l.dayProgramId)
+      if (kindFilter === 'walk') return !l.blocks.some((b) => b.kind === 'lift')
+      return kind === kindFilter
+    })
+    .slice(0, 12)
+
   return (
     <section className="page">
       <header className="page-head">
         <p className="eyebrow">History</p>
         <h1>Log</h1>
-        <p className="hero-stat">{weekVolume.toLocaleString()}</p>
+        <p className="hero-stat">{compare.thisWeek.toLocaleString()}</p>
         <p className="muted">lbs this week</p>
       </header>
 
+      {overdue && (
+        <div className="card nag-card">
+          <p className="eyebrow">Backup</p>
+          <h2>{lastExport ? 'Over two weeks since your last export' : 'Never backed up'}</h2>
+          <p className="muted">Your log lives on this phone only. One tap saves it to Files, Drive, or iCloud.</p>
+          <div className="row">
+            <button type="button" className="primary" onClick={canShare ? share : download}>
+              {canShare ? 'Share backup' : 'Export JSON'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <WeekStrip
         today={today}
+        selected={today}
         days={days}
         completed={completed}
+        offDays={state.settings.offDays}
         onPick={(date) => {
           setSelectedDate(date)
           openSession(null)
@@ -74,20 +151,67 @@ export function ProgressPage() {
         }}
       />
 
-      <div className="card fuel-card">
-        <h2>Eat</h2>
-        <p className="muted">
-          {state.dietGoals.kcal
-            ? `${Math.round(totalsForDate(state.foodEntries, today).kcal)} / ${state.dietGoals.kcal} kcal today`
-            : 'Daily food log and leftover portions.'}
-        </p>
-        <button type="button" className="primary wide" onClick={() => openEat(true)}>
-          Open eat
-        </button>
+      <div className="stats">
+        <div>
+          <span>Streak</span>
+          <strong className="log-stat">{streak}</strong>
+          <p className="muted">{streak === 1 ? 'trained day' : 'trained days'}</p>
+        </div>
+        <div>
+          <span>Vs last week</span>
+          <strong className="log-stat">
+            {compare.delta > 0 ? '+' : ''}
+            {compare.delta.toLocaleString()}
+          </strong>
+          <p className="muted">
+            {compare.lastWeek ? `${compare.lastWeek.toLocaleString()} last week` : 'No last week yet'}
+          </p>
+        </div>
+      </div>
+
+      <WeekRecapCard logs={state.logs} bodyWeight={state.bodyWeight} today={today} />
+
+      <div className="card">
+        <h2>Balance this week</h2>
+        <p className="muted">Volume by day kind. The short bar is where Later ideas point.</p>
+        <div className="balance">
+          {(['push', 'pull', 'legs'] as const).map((k) => (
+            <div key={k} className={`balance-row kind-${k}`}>
+              <span>{k}</span>
+              <div className="progress-track" aria-hidden>
+                <div className="progress-fill" style={{ width: `${Math.round((balance[k] / balanceMax) * 100)}%` }} />
+              </div>
+              <strong>{balance[k].toLocaleString()}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="card">
+        <h2>Best lifts this week</h2>
+        {best.length === 0 && <p className="muted">Finish a session this week and the heaviest sets land here.</p>}
+        <ul className="plain">
+          {best.map((row) => (
+            <li key={row.exerciseId}>
+              <button type="button" className="linkish" onClick={() => setPicked(row.exerciseId)}>
+                {EXERCISE_BY_ID[row.exerciseId]?.name ?? row.exerciseId}
+              </button>
+              <span>
+                {row.weight} × {row.reps} · e1RM {epley(row.weight, row.reps)}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="card">
         <h2>Body weight</h2>
+        {avg7 != null && (
+          <p className="muted">
+            7-day average <strong>{avg7}</strong> lbs
+            {slope != null && slope !== 0 ? ` · ${slope > 0 ? '+' : ''}${slope} lb/wk` : ''}
+          </p>
+        )}
         <form
           className="row"
           onSubmit={(e) => {
@@ -111,18 +235,25 @@ export function ProgressPage() {
             Save
           </button>
         </form>
+        <Spark values={weights.map((row) => row.lbs)} />
         <ul className="plain">
-          {[...state.bodyWeight]
+          {[...weights]
             .reverse()
             .slice(0, 6)
-            .map((row) => (
-              <li key={row.date}>
-                {row.date} · {row.lbs} lbs
-                <button type="button" className="ghost" onClick={() => removeBodyWeight(row.date)}>
-                  ×
-                </button>
-              </li>
-            ))}
+            .map((row) => {
+              const avg = rollingAverage(state.bodyWeight, row.date)
+              return (
+                <li key={row.date}>
+                  <span>
+                    {row.date} · {row.lbs} lbs
+                    {avg != null && avg !== row.lbs ? <em className="muted"> · avg {avg}</em> : null}
+                  </span>
+                  <button type="button" className="ghost" onClick={() => removeBodyWeight(row.date)}>
+                    ×
+                  </button>
+                </li>
+              )
+            })}
         </ul>
       </div>
 
@@ -145,15 +276,31 @@ export function ProgressPage() {
 
       {picked && (
         <div className="card">
-          <h2>{EXERCISE_BY_ID[picked]?.name} history</h2>
-          <Spark values={history.map((h) => h.bestWeight)} />
+          <div className="row between">
+            <h2>{EXERCISE_BY_ID[picked]?.name} trend</h2>
+            <button type="button" className="ghost small" onClick={() => setPicked(null)}>
+              ×
+            </button>
+          </div>
+          {e1rm.length > 0 && (
+            <p className="muted">
+              e1RM now <strong>{e1rm.at(-1)}</strong>
+              {e1rm.length > 1 ? ` · was ${e1rm[0]}` : ''}
+            </p>
+          )}
+          <Spark values={e1rm} />
           <ul className="plain">
             {history
               .slice()
               .reverse()
               .map((h) => (
                 <li key={h.date}>
-                  {h.date} · {h.bestWeight} × {h.bestReps} · {h.volume.toLocaleString()} lbs
+                  <span>
+                    {h.date} · {h.bestWeight} × {h.bestReps}
+                  </span>
+                  <span>
+                    e1RM {epley(h.bestWeight, h.bestReps)} · {h.volume.toLocaleString()} lbs
+                  </span>
                 </li>
               ))}
           </ul>
@@ -161,50 +308,67 @@ export function ProgressPage() {
       )}
 
       <div className="card">
-        <h2>Sessions</h2>
-        {state.logs.filter((l) => l.endedAt).length === 0 && (
-          <p className="muted">Finish a workout and it lands here.</p>
-        )}
+        <div className="row between">
+          <h2>Sessions</h2>
+        </div>
+        <div className="chip-row">
+          {(
+            [
+              ['all', 'All'],
+              ['push', 'Push'],
+              ['pull', 'Pull'],
+              ['legs', 'Legs'],
+              ['walk', 'Walks'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={kindFilter === id ? 'primary' : undefined}
+              onClick={() => setKindFilter(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {finished.length === 0 && <p className="muted">Finish a workout and it lands here.</p>}
+        {finished.length > 0 && visibleSessions.length === 0 && <p className="muted">Nothing of that kind yet.</p>}
         <ul className="plain">
-          {[...state.logs]
-            .filter((l) => l.endedAt)
-            .reverse()
-            .slice(0, 12)
-            .map((l) => {
-              const day = days.find((d) => d.id === l.dayProgramId)
-              const duration = l.endedAt ? formatDuration(l.startedAt, l.endedAt) : ''
-              return (
-                <li key={l.id}>
-                  <button type="button" className="session-row-btn" onClick={() => openSession(l.id)}>
-                    <strong>{programLabel(day, l.dayProgramId)}</strong>
-                    <span>
-                      {WEEKDAY_SHORT[weekdayOf(l.date)]} {l.date}
-                      {duration ? ` · ${duration}` : ''}
-                      {` · ${volumeForLog(l).toLocaleString()} lbs`}
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
+          {visibleSessions.map((l) => {
+            const day = days.find((d) => d.id === l.dayProgramId)
+            const duration = l.endedAt ? formatDuration(l.startedAt, l.endedAt) : ''
+            return (
+              <li key={l.id}>
+                <button type="button" className="session-row-btn" onClick={() => openSession(l.id)}>
+                  <strong>
+                    {programLabel(day, l.dayProgramId)}
+                    {l.deload ? ' · deload' : ''}
+                  </strong>
+                  <span>
+                    {WEEKDAY_SHORT[weekdayOf(l.date)]} {l.date}
+                    {duration ? ` · ${duration}` : ''}
+                    {` · ${volumeForLog(l).toLocaleString()} lbs`}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
         </ul>
       </div>
 
       <div className="card">
         <h2>Backup</h2>
-        <p className="muted">Your log lives on this phone. Export it so a wipe doesn’t eat it.</p>
+        <p className="muted">
+          Your log lives on this phone. Export it so a wipe doesn’t eat it.
+          {lastExport ? ` Last export ${lastExport.slice(0, 10)}.` : ''}
+        </p>
         <div className="row wrap">
-          <button
-            type="button"
-            onClick={() => {
-              const blob = new Blob([exportBackup()], { type: 'application/json' })
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement('a')
-              a.href = url
-              a.download = `gym-log-${today}.json`
-              a.click()
-              URL.revokeObjectURL(url)
-            }}
-          >
+          {canShare && (
+            <button type="button" className="primary" onClick={share}>
+              Share backup
+            </button>
+          )}
+          <button type="button" onClick={download}>
             Export JSON
           </button>
           <label className="file">
@@ -223,6 +387,8 @@ export function ProgressPage() {
           </label>
         </div>
       </div>
+
+      <InstallBanner />
     </section>
   )
 }

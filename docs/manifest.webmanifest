@@ -3,8 +3,8 @@
   "short_name": "Gym Log",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0a1024",
-  "theme_color": "#0a1024",
+  "background_color": "#090909",
+  "theme_color": "#090909",
   "icons": [
     {
       "src": "favicon.svg",

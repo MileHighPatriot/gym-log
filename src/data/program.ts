@@ -1,3 +1,4 @@
+import { addDays, weekdayOf } from '../lib/dates.ts'
 import type { DayProgram, ScheduleSlot } from '../types.ts'
 
 function walkIn(id: string) {
@@ -339,14 +340,41 @@ export const SCHEDULE: ScheduleSlot[] = [
     dayProgramId: 'pull-b',
     window: 'KidCare morning or evening',
     notes: 'Morning 8:30–10 if you need KidCare. Evening only with a sitter.',
+    slots: [
+      { label: 'a.m. walk', window: '8:30' },
+      { label: 'p.m. lift', window: 'with a sitter' },
+    ],
   },
   {
     weekday: 6,
     dayProgramId: 'legs-deadlift',
     window: 'KidCare 8–12 · done by 10:00',
     notes: 'Done by 10:00.',
+    slots: [
+      { label: 'a.m. lift', window: '8–10' },
+      { label: 'p.m. walk', window: 'optional' },
+    ],
   },
 ]
+
+/** Ad-hoc walk-only session for rest days or split days. Not on the Week card. */
+export const WALK_DAY: DayProgram = {
+  id: 'walk-only',
+  title: 'Walk',
+  subtitle: 'Just a walk',
+  blocks: [
+    {
+      id: 'walk-only-walk',
+      kind: 'walk',
+      label: 'Walk',
+      durationSec: 20 * 60,
+      durationMaxSec: 30 * 60,
+    },
+  ],
+}
+
+/** Minutes you want a lift session to fit inside. */
+export const SESSION_WINDOW_MIN = 90
 
 export const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 export const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -385,4 +413,51 @@ export function slotForWeekday(weekday: number): ScheduleSlot {
 export function overrideMatchesSchedule(days: DayProgram[]): boolean {
   const ids = new Set(days.map((day) => day.id))
   return SCHEDULE.every((slot) => !slot.dayProgramId || ids.has(slot.dayProgramId))
+}
+
+export function nextTrainingDay(
+  from: string,
+  days: DayProgram[],
+  offDays: number[] = [],
+): { date: string; day: DayProgram } | null {
+  for (let i = 1; i <= 7; i += 1) {
+    const date = addDays(from, i)
+    const weekday = weekdayOf(date)
+    if (offDays.includes(weekday)) continue
+    const slot = slotForWeekday(weekday)
+    if (!slot.dayProgramId) continue
+    const day = days.find((d) => d.id === slot.dayProgramId)
+    if (day) return { date, day }
+  }
+  return null
+}
+
+/** The scheduled day for a date, honoring the user's off days. */
+export function scheduledDay(date: string, days: DayProgram[], offDays: number[] = []): DayProgram | null {
+  const weekday = weekdayOf(date)
+  if (offDays.includes(weekday)) return null
+  const slot = slotForWeekday(weekday)
+  if (!slot.dayProgramId) return null
+  return days.find((d) => d.id === slot.dayProgramId) ?? null
+}
+
+/**
+ * Most recent scheduled day in the last `lookback` days with no finished log.
+ * Null when nothing was missed or the user has never trained (no nagging on day one).
+ */
+export function missedDay(
+  today: string,
+  days: DayProgram[],
+  trainedDates: Set<string>,
+  offDays: number[] = [],
+  lookback = 3,
+): { date: string; day: DayProgram } | null {
+  if (trainedDates.size === 0) return null
+  for (let i = 1; i <= lookback; i += 1) {
+    const date = addDays(today, -i)
+    if (trainedDates.has(date)) continue
+    const day = scheduledDay(date, days, offDays)
+    if (day) return { date, day }
+  }
+  return null
 }

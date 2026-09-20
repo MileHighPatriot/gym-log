@@ -22,6 +22,25 @@ describe('session', () => {
     expect(session.blocks.at(-1)).toMatchObject({ kind: 'walk', durationSec: 900 })
   })
 
+  it('deloads: −10% seed, one fewer set, no progression', () => {
+    const push = DAYS.find((d) => d.id === 'push-a')!
+    const session = startSession({
+      day: push,
+      date: '2026-09-21',
+      weekday: 1,
+      lastByExercise: { 'plate-chest-press': { weight: 185, reps: 10 } },
+      lastSetsByExercise: { 'plate-chest-press': [{ weight: 185, reps: 10, done: true }] },
+      deload: true,
+      programVersion: 3,
+    })
+    const bench = session.blocks.find((b) => b.kind === 'lift' && b.exerciseId === 'plate-chest-press')
+    if (bench?.kind !== 'lift') throw new Error('expected lift')
+    expect(bench.logged).toHaveLength(2)
+    expect(bench.logged[0]).toEqual({ weight: 165, reps: 8, done: false })
+    expect(session.deload).toBe(true)
+    expect(session.programVersion).toBe(3)
+  })
+
   it('inserts pinned extras before the cooldown walk', () => {
     const push = DAYS.find((d) => d.id === 'push-a')!
     const session = startSession({

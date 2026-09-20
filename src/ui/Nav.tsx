@@ -2,9 +2,9 @@ import type { Tab } from '../types.ts'
 
 const ITEMS: { id: Tab; label: string }[] = [
   { id: 'today', label: 'Today' },
-  { id: 'exercises', label: 'Lifts' },
+  { id: 'eat', label: 'Eat' },
   { id: 'progress', label: 'Log' },
-  { id: 'try', label: 'Try' },
+  { id: 'exercises', label: 'Library' },
   { id: 'program', label: 'Week' },
 ]
 
@@ -26,6 +26,13 @@ function NavIcon({ id }: { id: Tab }) {
       </svg>
     )
   }
+  if (id === 'eat') {
+    return (
+      <svg {...common}>
+        <path d="M7 3v10M5 3v6a2 2 0 0 0 4 0V3M17 3v18M15 3h4v6h-4z" />
+      </svg>
+    )
+  }
   if (id === 'exercises') {
     return (
       <svg {...common}>
@@ -38,14 +45,6 @@ function NavIcon({ id }: { id: Tab }) {
       <svg {...common}>
         <path d="M4 17l5-5 4 3 7-8" />
         <path d="M15 7h5v5" />
-      </svg>
-    )
-  }
-  if (id === 'try') {
-    return (
-      <svg {...common}>
-        <circle cx="12" cy="12" r="8" />
-        <path d="M12 8v8M8 12h8" />
       </svg>
     )
   }

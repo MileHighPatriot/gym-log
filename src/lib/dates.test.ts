@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, formatClock, formatDuration, formatReps, formatRest, mondayOfWeek, monthGrid, shiftMonth, weekDates, weekdayOf } from './dates.ts'
+import { addDays, formatClock, formatDuration, formatReps, formatRest, mondayOfWeek, monthGrid, shiftMonth, sundayWeekDates, weekDates, weekdayOf } from './dates.ts'
 
 describe('dates', () => {
   it('weekdayOf uses local calendar dates', () => {
@@ -23,6 +23,18 @@ describe('dates', () => {
       '2026-09-25',
       '2026-09-26',
       '2026-09-27',
+    ])
+  })
+
+  it('sundayWeekDates is Sun–Sat', () => {
+    expect(sundayWeekDates('2026-09-23')).toEqual([
+      '2026-09-20',
+      '2026-09-21',
+      '2026-09-22',
+      '2026-09-23',
+      '2026-09-24',
+      '2026-09-25',
+      '2026-09-26',
     ])
   })
 

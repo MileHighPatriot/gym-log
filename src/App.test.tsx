@@ -25,6 +25,14 @@ function render() {
   })
 }
 
+function nav(label: string) {
+  const btn = [...el.querySelectorAll('.nav-item')].find((b) => b.textContent?.includes(label))
+  if (!btn) throw new Error(`No nav ${label}`)
+  act(() => {
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+}
+
 function click(label: string) {
   const btn = [...el.querySelectorAll('button')].find((b) => b.textContent?.replace(/\s+/g, ' ').includes(label))
   if (!btn) throw new Error(`No button ${label}. Have: ${[...el.querySelectorAll('button')].map((b) => b.textContent).join(' | ')}`)
@@ -116,8 +124,9 @@ describe('Gym Log app', () => {
     const raw = localStorage.getItem(STORAGE_KEY)
     expect(raw).toMatch(/chicken|Chicken/)
     expect(raw).not.toMatch(/gym-log-gemini-key/)
-    click('← Back')
-    expect(el.textContent).toMatch(/left|Eat/)
+    click('Today')
+    expect(el.textContent).toMatch(/kcal left|Log food/)
+    expect(el.textContent).not.toMatch(/Type a food/)
   })
 
   it('photo without a key stays typed and never saves a guess', async () => {
@@ -194,11 +203,294 @@ describe('Gym Log app', () => {
 
   it('pins a suggestion onto a day', () => {
     render()
-    click('Try')
+    click('Week')
+    expect(el.textContent).not.toMatch(/Pec deck/)
+    click('Later (')
     expect(el.textContent).toMatch(/Pec deck/)
     click('Pin to Push')
     expect(el.textContent).toMatch(/Pinned/)
     const raw = localStorage.getItem(STORAGE_KEY)
     expect(raw).toMatch(/pec-deck/)
+  })
+
+  it('shows session HUD last/next and Same marks a set', () => {
+    const seed = {
+      version: 1,
+      exportedAt: '2026-09-20T12:00:00.000Z',
+      programOverride: null,
+      logs: [
+        {
+          id: 'old-push',
+          date: '2026-09-14',
+          weekday: 1,
+          dayProgramId: 'push-a',
+          startedAt: '2026-09-14T12:00:00.000Z',
+          endedAt: '2026-09-14T13:00:00.000Z',
+          blocks: [
+            {
+              id: 'pa-bench',
+              kind: 'lift',
+              exerciseId: 'plate-chest-press',
+              sets: 3,
+              repMin: 8,
+              repMax: 10,
+              restSec: 90,
+              logged: [{ weight: 185, reps: 8, done: true }],
+            },
+          ],
+        },
+      ],
+      activeSession: null,
+      bodyWeight: [],
+      dismissedSuggestions: [],
+      pinnedSuggestions: [],
+      foodEntries: [],
+      dietGoals: { kcal: 0, protein: 0 },
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seed))
+    render()
+    const mon = [...el.querySelectorAll('.week-day')].find((b) => b.textContent?.includes('Mon'))
+    if (!mon) throw new Error('No Monday on the week strip')
+    act(() => {
+      mon.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(el.textContent).toMatch(/Push/)
+    click('Start')
+    expect(el.textContent).toMatch(/Leave/)
+    click('Next')
+    expect(el.textContent).toMatch(/last 185 × 8 · beat it/)
+    const lbs = el.querySelector('input[aria-label="lbs"]') as HTMLInputElement
+    expect(lbs.value).toBe('185')
+    click('Same')
+    expect(el.textContent).toMatch(/✓/)
+    expect(el.textContent).toMatch(/Next up Plate-loaded chest press/)
+    click('Skip rest')
+    expect(el.textContent).not.toMatch(/Skip rest/)
+  })
+
+  it('seeds +5 when every last set hit the top of the range', () => {
+    const seed = {
+      version: 1,
+      exportedAt: '2026-09-20T12:00:00.000Z',
+      programOverride: null,
+      logs: [
+        {
+          id: 'old-push',
+          date: '2026-09-14',
+          weekday: 1,
+          dayProgramId: 'push-a',
+          startedAt: '2026-09-14T12:00:00.000Z',
+          endedAt: '2026-09-14T13:00:00.000Z',
+          blocks: [
+            {
+              id: 'pa-bench',
+              kind: 'lift',
+              exerciseId: 'plate-chest-press',
+              sets: 3,
+              repMin: 8,
+              repMax: 10,
+              restSec: 90,
+              logged: [
+                { weight: 185, reps: 10, done: true },
+                { weight: 185, reps: 10, done: true },
+                { weight: 185, reps: 10, done: true },
+              ],
+            },
+          ],
+        },
+      ],
+      activeSession: null,
+      bodyWeight: [],
+      dismissedSuggestions: [],
+      pinnedSuggestions: [],
+      foodEntries: [],
+      dietGoals: { kcal: 0, protein: 0 },
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seed))
+    render()
+    const mon = [...el.querySelectorAll('.week-day')].find((b) => b.textContent?.includes('Mon'))
+    if (!mon) throw new Error('No Monday on the week strip')
+    act(() => {
+      mon.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    click('Start')
+    click('Next')
+    expect(el.textContent).toMatch(/last 185 × 10 · next 190 × 8/)
+    const lbsInput = el.querySelector('input[aria-label="lbs"]') as HTMLInputElement
+    expect(lbsInput.value).toBe('190')
+    expect(el.textContent).toMatch(/Warm-up/)
+    expect(el.textContent).toMatch(/95 × 5/)
+    expect(el.textContent).toMatch(/45 \+ 45 \+ 5 \/ side/)
+  })
+
+  it('starts a walk-only session from a rest day and logs it as a walk', () => {
+    render()
+    const sun = [...el.querySelectorAll('.week-day')].find((b) => b.textContent?.includes('Sun'))
+    if (!sun) throw new Error('No Sunday on the week strip')
+    act(() => {
+      sun.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    const isToday = el.textContent?.includes('Today') && !el.textContent?.includes('Calendar')
+    if (!isToday) return
+    click('Walk now')
+    expect(el.textContent).toMatch(/Leave/)
+    expect(el.textContent).toMatch(/set walk/)
+    click('Mark done')
+    click('Finish')
+    click('Done')
+    nav('Log')
+    click('Walks')
+    expect(el.textContent).toMatch(/Walk · Just a walk/)
+  })
+
+  it('deload week trims a set and the load', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        exportedAt: '',
+        programOverride: null,
+        logs: [
+          {
+            id: 'old-push',
+            date: '2026-09-14',
+            weekday: 1,
+            dayProgramId: 'push-a',
+            startedAt: '2026-09-14T12:00:00.000Z',
+            endedAt: '2026-09-14T13:00:00.000Z',
+            blocks: [
+              {
+                id: 'pa-bench',
+                kind: 'lift',
+                exerciseId: 'plate-chest-press',
+                sets: 3,
+                repMin: 8,
+                repMax: 10,
+                restSec: 90,
+                logged: [{ weight: 200, reps: 10, done: true }],
+              },
+            ],
+          },
+        ],
+        activeSession: null,
+        bodyWeight: [],
+        dismissedSuggestions: [],
+        pinnedSuggestions: [],
+        foodEntries: [],
+        dietGoals: { kcal: 0, protein: 0 },
+      }),
+    )
+    render()
+    click('Week')
+    click('Off')
+    expect(el.textContent).toMatch(/This week is a deload/)
+    click('Today')
+    const mon = [...el.querySelectorAll('.week-day')].find((b) => b.textContent?.includes('Mon'))
+    if (!mon) throw new Error('No Monday')
+    act(() => {
+      mon.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(el.textContent).toMatch(/−10% · −1 set/)
+    click('Start')
+    click('Next')
+    expect(el.textContent).toMatch(/deload/)
+    expect(el.querySelectorAll('input[aria-label="lbs"]')).toHaveLength(2)
+    expect((el.querySelector('input[aria-label="lbs"]') as HTMLInputElement).value).toBe('180')
+  })
+
+  it('RPE hard blocks the +5 next time', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        exportedAt: '',
+        programOverride: null,
+        logs: [
+          {
+            id: 'old-push',
+            date: '2026-09-14',
+            weekday: 1,
+            dayProgramId: 'push-a',
+            startedAt: '2026-09-14T12:00:00.000Z',
+            endedAt: '2026-09-14T13:00:00.000Z',
+            blocks: [
+              {
+                id: 'pa-bench',
+                kind: 'lift',
+                exerciseId: 'plate-chest-press',
+                sets: 3,
+                repMin: 8,
+                repMax: 10,
+                restSec: 90,
+                logged: [
+                  { weight: 185, reps: 10, done: true, rpe: 'hard' },
+                  { weight: 185, reps: 10, done: true },
+                ],
+              },
+            ],
+          },
+        ],
+        activeSession: null,
+        bodyWeight: [],
+        dismissedSuggestions: [],
+        pinnedSuggestions: [],
+        foodEntries: [],
+        dietGoals: { kcal: 0, protein: 0 },
+      }),
+    )
+    render()
+    const mon = [...el.querySelectorAll('.week-day')].find((b) => b.textContent?.includes('Mon'))
+    if (!mon) throw new Error('No Monday')
+    act(() => {
+      mon.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    click('Start')
+    click('Next')
+    expect(el.textContent).toMatch(/last 185 × 10 · match it/)
+    click('Same')
+    expect(el.textContent).toMatch(/easy/)
+    click('hard')
+    click('Undo set')
+    expect(el.textContent).not.toMatch(/Skip rest/)
+    expect(el.textContent).not.toMatch(/✓/)
+  })
+
+  it('logs a food into a meal and repeats yesterday', () => {
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        exportedAt: '',
+        programOverride: null,
+        logs: [],
+        activeSession: null,
+        bodyWeight: [],
+        dismissedSuggestions: [],
+        pinnedSuggestions: [],
+        foodEntries: [
+          {
+            id: 'y1',
+            date: yesterday,
+            name: 'Greek yogurt, nonfat',
+            servings: 1,
+            grams: 227,
+            kcal: 130,
+            protein: 23,
+            source: 'search',
+            meal: 'breakfast',
+          },
+        ],
+        dietGoals: { kcal: 2000, protein: 160 },
+      }),
+    )
+    render()
+    click('Eat')
+    expect(el.textContent).toMatch(/Recent/)
+    expect(el.textContent).toMatch(/Greek yogurt/)
+    click('Repeat yesterday')
+    expect(el.textContent).toMatch(/Copied 1 item/)
+    expect(el.textContent).toMatch(/breakfast · 130 kcal/)
+    click('Read a label')
   })
 })

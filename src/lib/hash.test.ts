@@ -5,6 +5,8 @@ describe('tabFromHash', () => {
   it('reads the tab name', () => {
     expect(tabFromHash('#/progress')).toBe('progress')
     expect(tabFromHash('#/program')).toBe('program')
+    expect(tabFromHash('#/eat')).toBe('eat')
+    expect(tabFromHash('#/try')).toBe('program')
     expect(tabFromHash('#/exercises/bench-press')).toBe('exercises')
     expect(tabFromHash('#/nope')).toBeNull()
   })
