@@ -24,7 +24,7 @@ describe('program seed', () => {
     expect(liftIds('legs-squat')).not.toEqual(liftIds('legs-deadlift'))
     const pushOverlap = liftIds('push-a').filter((id) => liftIds('push-b').includes(id))
     const pullOverlap = liftIds('pull-a').filter((id) => liftIds('pull-b').includes(id))
-    expect(pushOverlap).toEqual([])
+    expect(pushOverlap).toEqual(['bench-press'])
     expect(pullOverlap).toEqual([])
   })
 
@@ -42,9 +42,9 @@ describe('program seed', () => {
     expect(wedExtra.some((ex) => satExtra.includes(ex))).toBe(false)
   })
 
-  it('opens both push days with a barbell bench', () => {
+  it('does barbell bench on every push day', () => {
     expect(liftIds('push-a')[0]).toBe('bench-press')
-    expect(liftIds('push-b')[0]).toBe('incline-bench')
+    expect(liftIds('push-b')[0]).toBe('bench-press')
     expect(getExercise('bench-press').equipment).toMatch(/barbell/i)
     expect(getExercise('incline-bench').equipment).toMatch(/barbell/i)
   })
