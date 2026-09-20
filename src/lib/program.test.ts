@@ -27,6 +27,21 @@ describe('program seed', () => {
     expect(pullOverlap).toEqual([])
   })
 
+  it('puts squat, deadlift, and leg press on every leg day', () => {
+    for (const id of ['legs-squat', 'legs-deadlift']) {
+      const lifts = liftIds(id)
+      expect(lifts).toContain('squat')
+      expect(lifts).toContain('pin-deadlift')
+      expect(lifts).toContain('leg-press')
+      const extras = lifts.filter((ex) => !['squat', 'pin-deadlift', 'leg-press'].includes(ex))
+      expect(extras.length).toBeGreaterThanOrEqual(1)
+      expect(extras.length).toBeLessThanOrEqual(2)
+    }
+    const wedExtra = liftIds('legs-squat').filter((ex) => !['squat', 'pin-deadlift', 'leg-press'].includes(ex))
+    const satExtra = liftIds('legs-deadlift').filter((ex) => !['squat', 'pin-deadlift', 'leg-press'].includes(ex))
+    expect(wedExtra.some((ex) => satExtra.includes(ex))).toBe(false)
+  })
+
   it('keeps one row per pull day', () => {
     for (const id of ['pull-a', 'pull-b']) {
       const rows = liftIds(id).filter((ex) => /row/.test(ex))

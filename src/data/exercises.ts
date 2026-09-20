@@ -489,7 +489,7 @@ const RAW: Exercise[] = [
     ['Back', 'Glutes', 'Hamstrings'],
     [
       'Bar at mid-shin. This is not a deadlift off the floor.',
-      'Hinge, grab, lock the back, stand tall. Wednesday is lighter than Saturday.',
+      'Hinge, grab, lock the back, stand tall. Every leg day. Wednesday is lighter than Saturday.',
     ],
   ),
   lift(

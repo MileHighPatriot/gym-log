@@ -213,7 +213,7 @@ export const DAYS: DayProgram[] = [
   {
     id: 'legs-squat',
     title: 'Legs',
-    subtitle: 'Box-squat day',
+    subtitle: 'Squat · deadlift · press',
     blocks: [
       walkIn('ls'),
       {
@@ -270,7 +270,7 @@ export const DAYS: DayProgram[] = [
   {
     id: 'legs-deadlift',
     title: 'Legs',
-    subtitle: 'Rack-pull day',
+    subtitle: 'Squat · deadlift · press',
     blocks: [
       walkIn('ld'),
       {
@@ -286,13 +286,22 @@ export const DAYS: DayProgram[] = [
       {
         id: 'ld-squat',
         kind: 'lift',
-        exerciseId: 'smith-squat',
+        exerciseId: 'squat',
         sets: 3,
         repMin: 6,
         repMax: 6,
         restSec: 90,
         loadNote: 'One plate under Wednesday’s box squat.',
-        notes: 'Smith squat today so it is not the same as Wednesday’s box squat.',
+        notes: 'Box squat again. Smith if the box/rack is taken. Not a deep free squat.',
+      },
+      {
+        id: 'ld-press',
+        kind: 'lift',
+        exerciseId: 'leg-press',
+        sets: 3,
+        repMin: 10,
+        repMax: 12,
+        restSec: 90,
       },
       {
         id: 'ld-glute',
@@ -302,17 +311,7 @@ export const DAYS: DayProgram[] = [
         repMin: 10,
         repMax: 12,
         restSec: 90,
-        notes: 'Glute drive instead of repeating Wednesday’s leg press.',
-      },
-      {
-        id: 'ld-abd',
-        kind: 'lift',
-        exerciseId: 'hip-abduction',
-        sets: 3,
-        repMin: 12,
-        repMax: 15,
-        restSec: 45,
-        notes: 'Push legs out. Not walking lunges.',
+        notes: 'Glute drive. Hamstring curl was Wednesday.',
       },
       {
         id: 'ld-calf',
