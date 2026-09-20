@@ -1,4 +1,4 @@
-import type { SessionLog } from '../types.ts'
+import type { LoggedSet, SessionLog } from '../types.ts'
 
 export type PersonalRecord = {
   exerciseId: string
@@ -49,6 +49,29 @@ export function volumeForLog(log: SessionLog): number {
     }
   }
   return total
+}
+
+export type SetBeat = { kind: 'pr' | 'last'; text: string }
+
+export function beatForSet(args: {
+  next: LoggedSet
+  last: { weight: number | null; reps: number | null } | null
+  pr: PersonalRecord | null
+}): SetBeat | null {
+  const { next, last, pr } = args
+  if (!next.done || next.weight == null || next.reps == null) return null
+  if (pr && (next.weight > pr.weight || (next.weight === pr.weight && next.reps > pr.reps))) {
+    return { kind: 'pr', text: `PR · ${next.weight} × ${next.reps}` }
+  }
+  if (last?.weight != null) {
+    if (next.weight > last.weight) {
+      return { kind: 'last', text: `+${next.weight - last.weight} lbs vs last` }
+    }
+    if (last.reps != null && next.weight === last.weight && next.reps > last.reps) {
+      return { kind: 'last', text: `+${next.reps - last.reps} reps vs last` }
+    }
+  }
+  return null
 }
 
 export function historyForExercise(

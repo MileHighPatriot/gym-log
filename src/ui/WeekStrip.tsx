@@ -1,6 +1,7 @@
-import { SCHEDULE, WEEKDAY_SHORT, dayById } from '../data/program.ts'
+import { SCHEDULE, WEEKDAY_SHORT, dayById, dayKind } from '../data/program.ts'
 import { weekDates, weekdayOf } from '../lib/dates.ts'
 import type { DayProgram } from '../types.ts'
+import { DayMark } from './DayMark.tsx'
 
 export function WeekStrip({
   today,
@@ -22,16 +23,17 @@ export function WeekStrip({
         const day = slot.dayProgramId ? dayById(days, slot.dayProgramId) : null
         const isToday = date === today
         const done = completed.has(date)
+        const kind = dayKind(day)
         return (
           <button
             key={date}
             type="button"
-            className={`week-day${isToday ? ' today' : ''}${done ? ' done' : ''}`}
+            className={`week-day kind-${kind}${isToday ? ' today' : ''}${done ? ' done' : ''}`}
             onClick={() => onPick?.(date)}
           >
             <span>{WEEKDAY_SHORT[weekday]}</span>
             <strong>{date.slice(8)}</strong>
-            <em>{day ? (day.id.startsWith('push') ? 'U' : day.id.startsWith('pull') ? 'P' : 'L') : 'R'}</em>
+            <DayMark kind={kind} done={done} />
           </button>
         )
       })}

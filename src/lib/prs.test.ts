@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { historyForExercise, recordsFromLogs, volumeForLog } from './prs.ts'
+import { beatForSet, historyForExercise, recordsFromLogs, volumeForLog } from './prs.ts'
 import type { SessionLog } from '../types.ts'
 
 function log(partial: Partial<SessionLog> & Pick<SessionLog, 'date' | 'blocks'>): SessionLog {
@@ -88,5 +88,29 @@ describe('PRs', () => {
       bestWeight: 135,
       volume: 2160,
     })
+  })
+
+  it('celebrates a beat vs last or PR, not a first set', () => {
+    expect(
+      beatForSet({
+        next: { weight: 135, reps: 8, done: true },
+        last: null,
+        pr: null,
+      }),
+    ).toBeNull()
+    expect(
+      beatForSet({
+        next: { weight: 140, reps: 8, done: true },
+        last: { weight: 135, reps: 8 },
+        pr: { exerciseId: 'bench-press', weight: 145, reps: 8, date: '2026-09-14' },
+      }),
+    ).toEqual({ kind: 'last', text: '+5 lbs vs last' })
+    expect(
+      beatForSet({
+        next: { weight: 150, reps: 8, done: true },
+        last: { weight: 135, reps: 8 },
+        pr: { exerciseId: 'bench-press', weight: 145, reps: 8, date: '2026-09-14' },
+      }),
+    ).toEqual({ kind: 'pr', text: 'PR · 150 × 8' })
   })
 })

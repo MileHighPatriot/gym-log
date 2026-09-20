@@ -1,13 +1,31 @@
 import { useMemo, useState } from 'react'
 import { EXERCISE_BY_ID } from '../data/exercises.ts'
-import { WEEKDAY_SHORT } from '../data/program.ts'
-import { weekDates, weekdayOf } from '../lib/dates.ts'
+import { WEEKDAY_SHORT, programLabel } from '../data/program.ts'
+import { formatDuration, weekDates, weekdayOf } from '../lib/dates.ts'
 import { historyForExercise, recordsFromLogs, volumeForLog } from '../lib/prs.ts'
 import { useStore } from '../state/Store.tsx'
 import { WeekStrip } from '../ui/WeekStrip.tsx'
+import { SessionReview } from './SessionReview.tsx'
+import { EatPage } from './Eat.tsx'
+import { totalsForDate } from '../lib/diet.ts'
 
 export function ProgressPage() {
-  const { state, days, today, logBodyWeight, removeBodyWeight, exportBackup, importBackup } = useStore()
+  const {
+    state,
+    days,
+    today,
+    logBodyWeight,
+    removeBodyWeight,
+    exportBackup,
+    importBackup,
+    reviewSessionId,
+    openSession,
+    openExercise,
+    setSelectedDate,
+    setTab,
+    eatOpen,
+    openEat,
+  } = useStore()
   const [lbs, setLbs] = useState('')
   const [picked, setPicked] = useState<string | null>(null)
   const completed = new Set(state.logs.filter((l) => l.endedAt).map((l) => l.date))
@@ -22,15 +40,51 @@ export function ProgressPage() {
     [picked, state.logs],
   )
 
+  if (eatOpen) return <EatPage />
+
+  const review = reviewSessionId ? state.logs.find((l) => l.id === reviewSessionId) : null
+  if (review) {
+    return (
+      <SessionReview
+        session={review}
+        day={days.find((d) => d.id === review.dayProgramId)}
+        onBack={() => openSession(null)}
+        onOpenExercise={openExercise}
+      />
+    )
+  }
+
   return (
     <section className="page">
       <header className="page-head">
         <p className="eyebrow">History</p>
         <h1>Log</h1>
-        <p className="muted">{weekVolume.toLocaleString()} lbs this week</p>
+        <p className="hero-stat">{weekVolume.toLocaleString()}</p>
+        <p className="muted">lbs this week</p>
       </header>
 
-      <WeekStrip today={today} days={days} completed={completed} />
+      <WeekStrip
+        today={today}
+        days={days}
+        completed={completed}
+        onPick={(date) => {
+          setSelectedDate(date)
+          openSession(null)
+          setTab('today')
+        }}
+      />
+
+      <div className="card fuel-card">
+        <h2>Eat</h2>
+        <p className="muted">
+          {state.dietGoals.kcal
+            ? `${Math.round(totalsForDate(state.foodEntries, today).kcal)} / ${state.dietGoals.kcal} kcal today`
+            : 'Daily food log and leftover portions.'}
+        </p>
+        <button type="button" className="primary wide" onClick={() => openEat(true)}>
+          Open eat
+        </button>
+      </div>
 
       <div className="card">
         <h2>Body weight</h2>
@@ -116,11 +170,22 @@ export function ProgressPage() {
             .filter((l) => l.endedAt)
             .reverse()
             .slice(0, 12)
-            .map((l) => (
-              <li key={l.id}>
-                {WEEKDAY_SHORT[weekdayOf(l.date)]} {l.date} · {l.dayProgramId} · {volumeForLog(l).toLocaleString()} lbs
-              </li>
-            ))}
+            .map((l) => {
+              const day = days.find((d) => d.id === l.dayProgramId)
+              const duration = l.endedAt ? formatDuration(l.startedAt, l.endedAt) : ''
+              return (
+                <li key={l.id}>
+                  <button type="button" className="session-row-btn" onClick={() => openSession(l.id)}>
+                    <strong>{programLabel(day, l.dayProgramId)}</strong>
+                    <span>
+                      {WEEKDAY_SHORT[weekdayOf(l.date)]} {l.date}
+                      {duration ? ` · ${duration}` : ''}
+                      {` · ${volumeForLog(l).toLocaleString()} lbs`}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
         </ul>
       </div>
 
@@ -178,7 +243,8 @@ function Spark({ values }: { values: number[] }) {
     .join(' ')
   return (
     <svg className="spark" viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
-      <polyline fill="none" stroke="currentColor" strokeWidth="3" points={pts} />
+      <polygon className="spark-fill" points={`0,${h} ${pts} ${w},${h}`} />
+      <polyline className="spark-line" fill="none" stroke="currentColor" strokeWidth="3" points={pts} />
     </svg>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { formatClock } from '../lib/dates.ts'
 
 export function useCountdown(running: boolean, seconds: number, onDone?: () => void) {
@@ -42,10 +42,16 @@ export function RestOverlay({
     onSkip()
   }, [left, onSkip])
 
+  const pct = seconds > 0 ? (left / seconds) * 100 : 0
+
   return (
     <div className="rest-overlay">
-      <p>Rest</p>
-      <strong>{formatClock(left)}</strong>
+      <p className="eyebrow">Rest</p>
+      <div className="rest-ring" style={{ '--p': pct } as CSSProperties}>
+        <div className="rest-ring-inner">
+          <strong>{formatClock(left)}</strong>
+        </div>
+      </div>
       <button type="button" className="primary" onClick={onSkip}>
         Skip rest
       </button>

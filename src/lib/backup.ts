@@ -1,7 +1,9 @@
 import { overrideMatchesSchedule } from '../data/program.ts'
-import type { AppState, BackupPayload } from '../types.ts'
+import type { AppState, BackupPayload, DietGoals, FoodEntry } from '../types.ts'
 
 export const STORAGE_KEY = 'gym-log-v1'
+
+export const emptyGoals = (): DietGoals => ({ kcal: 0, protein: 0 })
 
 export const emptyState = (): AppState => ({
   programOverride: null,
@@ -10,6 +12,8 @@ export const emptyState = (): AppState => ({
   bodyWeight: [],
   dismissedSuggestions: [],
   pinnedSuggestions: [],
+  foodEntries: [],
+  dietGoals: emptyGoals(),
 })
 
 export function parseBackup(raw: string): AppState {
@@ -25,6 +29,11 @@ export function parseBackup(raw: string): AppState {
     bodyWeight: Array.isArray(data.bodyWeight) ? data.bodyWeight : [],
     dismissedSuggestions: Array.isArray(data.dismissedSuggestions) ? data.dismissedSuggestions : [],
     pinnedSuggestions: Array.isArray(data.pinnedSuggestions) ? data.pinnedSuggestions : [],
+    foodEntries: Array.isArray(data.foodEntries) ? (data.foodEntries as FoodEntry[]) : [],
+    dietGoals: {
+      kcal: Number(data.dietGoals?.kcal) || 0,
+      protein: Number(data.dietGoals?.protein) || 0,
+    },
   }
 }
 
@@ -38,6 +47,8 @@ export function toBackup(state: AppState): BackupPayload {
     bodyWeight: state.bodyWeight,
     dismissedSuggestions: state.dismissedSuggestions,
     pinnedSuggestions: state.pinnedSuggestions,
+    foodEntries: state.foodEntries,
+    dietGoals: state.dietGoals,
   }
 }
 

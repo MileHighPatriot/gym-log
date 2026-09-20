@@ -351,6 +351,25 @@ export const SCHEDULE: ScheduleSlot[] = [
 export const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 export const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+export type DayKind = 'push' | 'pull' | 'legs' | 'rest'
+
+export function dayKindFromId(id?: string | null): DayKind {
+  if (!id) return 'rest'
+  if (id.startsWith('push')) return 'push'
+  if (id.startsWith('pull')) return 'pull'
+  if (id.startsWith('legs')) return 'legs'
+  return 'rest'
+}
+
+export function dayKind(day?: DayProgram | null): DayKind {
+  return dayKindFromId(day?.id)
+}
+
+export function programLabel(day?: DayProgram | null, fallback = 'Session'): string {
+  if (!day) return fallback
+  return day.subtitle ? `${day.title} · ${day.subtitle}` : day.title
+}
+
 export function dayById(days: DayProgram[], id: string): DayProgram {
   const found = days.find((day) => day.id === id)
   if (!found) throw new Error(`Unknown day: ${id}`)

@@ -1,6 +1,7 @@
-import { SCHEDULE, WEEKDAY_SHORT, dayById } from '../data/program.ts'
+import { SCHEDULE, WEEKDAY_SHORT, dayById, dayKind } from '../data/program.ts'
 import { monthGrid, monthLabel, sameMonth, shiftMonth, weekdayOf } from '../lib/dates.ts'
 import type { DayProgram } from '../types.ts'
+import { DayMark } from './DayMark.tsx'
 
 export function Calendar({
   today,
@@ -43,8 +44,7 @@ export function Calendar({
           const isToday = date === today
           const isSelected = date === selected
           const done = completed.has(date)
-          const mark = day ? (day.id.startsWith('push') ? 'U' : day.id.startsWith('pull') ? 'P' : 'L') : 'R'
-          const kind = !day ? 'rest' : day.id.startsWith('push') ? 'push' : day.id.startsWith('pull') ? 'pull' : 'legs'
+          const kind = dayKind(day)
           return (
             <button
               key={date}
@@ -53,12 +53,12 @@ export function Calendar({
               onClick={() => onPick(date)}
             >
               <span className="cal-num">{date.slice(8)}</span>
-              <em>{mark}</em>
+              <DayMark kind={kind} done={done} />
             </button>
           )
         })}
       </div>
-      <p className="muted cal-legend">U push · P pull · L legs · R rest. Tap a day to see that day’s work.</p>
+      <p className="muted cal-legend">Tap a day to see that day’s work.</p>
     </div>
   )
 }

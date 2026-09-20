@@ -49,6 +49,16 @@ export function formatClock(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
+export function formatDuration(startedAt: string, endedAt: string): string {
+  const ms = new Date(endedAt).getTime() - new Date(startedAt).getTime()
+  if (!Number.isFinite(ms) || ms <= 0) return ''
+  const min = Math.round(ms / 60000)
+  if (min < 60) return `${min} min`
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return m ? `${h}h ${m}m` : `${h}h`
+}
+
 export function formatReps(min: number, max: number): string {
   return min === max ? `${min}` : `${min}–${max}`
 }

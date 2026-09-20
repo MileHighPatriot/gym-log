@@ -94,7 +94,7 @@ export function ExercisesPage() {
         placeholder="Search lifts"
         type="search"
       />
-      <div className="row wrap">
+      <div className="chip-row">
         {(
           [
             ['all', 'All'],
@@ -131,6 +131,7 @@ export function ExercisesPage() {
       {filter !== 'avoid' && <ul className="lift-list">
         {filtered.map((ex) => {
           const last = lastSetForExercise(state.logs, ex.id)
+          const pr = recordFor(state.logs, ex.id)
           return (
             <li key={ex.id}>
               <button type="button" className="lift-row" onClick={() => openExercise(ex.id)}>
@@ -143,10 +144,19 @@ export function ExercisesPage() {
                 />
                 <span>
                   <strong>{ex.name}</strong>
-                  <em>
-                    {ex.muscles[0]}
-                    {last?.weight != null ? ` · last ${last.weight}×${last.reps}` : ''}
-                  </em>
+                  <em>{ex.muscles[0]}</em>
+                  <span className="stat-chips">
+                    {last?.weight != null && (
+                      <span className="stat-chip">
+                        Last {last.weight}×{last.reps}
+                      </span>
+                    )}
+                    {pr && (
+                      <span className="stat-chip">
+                        PR {pr.weight}×{pr.reps}
+                      </span>
+                    )}
+                  </span>
                 </span>
               </button>
             </li>

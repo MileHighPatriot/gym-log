@@ -1,5 +1,5 @@
 import { SUGGESTIONS } from '../data/suggestions.ts'
-import { DAYS } from '../data/program.ts'
+import { DAYS, dayKindFromId } from '../data/program.ts'
 import { getExercise } from '../data/exercises.ts'
 import { formatReps, formatRest } from '../lib/dates.ts'
 import { useStore } from '../state/Store.tsx'
@@ -27,8 +27,9 @@ export function TryNextPage() {
           days.find((d) => d.id.startsWith(suggestion.fitsDayProgramId.split('-')[0]))
         if (!day) return null
         const pinned = state.pinnedSuggestions.find((p) => p.suggestionId === suggestion.id)
+        const kind = dayKindFromId(day.id)
         return (
-          <article key={suggestion.id} className="card">
+          <article key={suggestion.id} className={`card kind-${kind}`}>
             <p className="eyebrow">Fits {day.title}{day.subtitle ? ` · ${day.subtitle}` : ''}</p>
             <h2>{suggestion.title}</h2>
             <p>{suggestion.why}</p>

@@ -109,6 +109,33 @@ export type BodyWeight = {
   lbs: number
 }
 
+export type FoodItem = {
+  id: string
+  name: string
+  servingLabel: string
+  grams: number
+  kcal: number
+  protein: number
+}
+
+export type FoodSource = 'search' | 'custom' | 'photo'
+
+export type FoodEntry = {
+  id: string
+  date: string
+  name: string
+  servings: number
+  grams: number
+  kcal: number
+  protein: number
+  source: FoodSource
+}
+
+export type DietGoals = {
+  kcal: number
+  protein: number
+}
+
 export type Suggestion = {
   id: string
   title: string
@@ -135,6 +162,8 @@ export type BackupPayload = {
   bodyWeight: BodyWeight[]
   dismissedSuggestions: string[]
   pinnedSuggestions: PinnedSuggestion[]
+  foodEntries: FoodEntry[]
+  dietGoals: DietGoals
 }
 
 export type AppState = {
@@ -144,6 +173,8 @@ export type AppState = {
   bodyWeight: BodyWeight[]
   dismissedSuggestions: string[]
   pinnedSuggestions: PinnedSuggestion[]
+  foodEntries: FoodEntry[]
+  dietGoals: DietGoals
 }
 
 export type Tab = 'today' | 'exercises' | 'progress' | 'try' | 'program'

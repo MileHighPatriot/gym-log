@@ -9,7 +9,7 @@ import { ProgramPage } from './pages/Program.tsx'
 import type { Tab } from './types.ts'
 
 export default function App() {
-  const { tab, setTab, openExercise, state } = useStore()
+  const { tab, setTab, openExercise, openSession, openEat, state, sessionView } = useStore()
 
   useEffect(() => {
     const next = `#/${tab}`
@@ -18,19 +18,23 @@ export default function App() {
 
   const go = (next: Tab) => {
     openExercise(null)
+    openSession(null)
+    openEat(false)
     setTab(next)
   }
 
   return (
-    <div className={`app${state.activeSession && tab === 'today' ? ' in-session' : ''}`}>
+    <div className={`app${state.activeSession && sessionView && tab === 'today' ? ' in-session' : ''}`}>
       <main>
-        {tab === 'today' && <TodayPage />}
-        {tab === 'exercises' && <ExercisesPage />}
-        {tab === 'progress' && <ProgressPage />}
-        {tab === 'try' && <TryNextPage />}
-        {tab === 'program' && <ProgramPage />}
+        <div key={tab} className="page-enter">
+          {tab === 'today' && <TodayPage />}
+          {tab === 'exercises' && <ExercisesPage />}
+          {tab === 'progress' && <ProgressPage />}
+          {tab === 'try' && <TryNextPage />}
+          {tab === 'program' && <ProgramPage />}
+        </div>
       </main>
-      {!(state.activeSession && tab === 'today') && <Nav tab={tab} onTab={go} />}
+      {!(state.activeSession && sessionView && tab === 'today') && <Nav tab={tab} onTab={go} />}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, formatClock, formatReps, formatRest, mondayOfWeek, monthGrid, shiftMonth, weekDates, weekdayOf } from './dates.ts'
+import { addDays, formatClock, formatDuration, formatReps, formatRest, mondayOfWeek, monthGrid, shiftMonth, weekDates, weekdayOf } from './dates.ts'
 
 describe('dates', () => {
   it('weekdayOf uses local calendar dates', () => {
@@ -48,5 +48,7 @@ describe('dates', () => {
     expect(formatClock(75)).toBe('1:15')
     expect(formatReps(8, 10)).toBe('8–10')
     expect(formatReps(12, 12)).toBe('12')
+    expect(formatDuration('2026-09-20T07:00:00.000Z', '2026-09-20T07:42:00.000Z')).toBe('42 min')
+    expect(formatDuration('2026-09-20T07:00:00.000Z', '2026-09-20T08:15:00.000Z')).toBe('1h 15m')
   })
 })

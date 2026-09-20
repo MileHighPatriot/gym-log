@@ -1,5 +1,5 @@
 import { AVOID } from '../data/avoid.ts'
-import { SCHEDULE, WEEKDAY_NAMES } from '../data/program.ts'
+import { SCHEDULE, WEEKDAY_NAMES, dayKind } from '../data/program.ts'
 import { getExercise } from '../data/exercises.ts'
 import { formatReps, formatRest } from '../lib/dates.ts'
 import { useStore } from '../state/Store.tsx'
@@ -18,8 +18,9 @@ export function ProgramPage() {
 
       {SCHEDULE.map((slot) => {
         const day = slot.dayProgramId ? days.find((d) => d.id === slot.dayProgramId) : null
+        const kind = dayKind(day)
         return (
-          <article key={slot.weekday} className="card">
+          <article key={slot.weekday} className={`card kind-${kind}`}>
             <p className="eyebrow">{WEEKDAY_NAMES[slot.weekday]} · {slot.window}</p>
             <h2>{day ? `${day.title}${day.subtitle ? ` · ${day.subtitle}` : ''}` : 'Rest'}</h2>
             {slot.notes && <p className="note">{slot.notes}</p>}
