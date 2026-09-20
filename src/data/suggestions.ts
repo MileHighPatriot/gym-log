@@ -8,7 +8,7 @@ export const SUGGESTIONS: Suggestion[] = [
   {
     id: 'pec-deck',
     title: 'Pec deck',
-    why: 'Later chest fly after the machine presses. No barbell.',
+    why: 'Later chest fly after the bench and the machine press.',
     fitsDayProgramId: 'push',
     exerciseId: 'pec-deck',
     sets: 3,

@@ -5,15 +5,25 @@ import type { BodyWeight, FoodEntry, LoggedSet, Rpe, SessionLog } from '../types
 export type LastLoad = { weight: number | null; reps: number | null }
 
 export const PLATES = [45, 35, 25, 10, 5, 2.5] as const
+export const BAR_LBS = 45
+
+export type LoadType = 'barbell' | 'plate' | null
+
+/** What the weight field means for this piece of equipment. */
+export function loadTypeFor(equipment: string): LoadType {
+  if (/barbell/i.test(equipment)) return 'barbell'
+  if (/plate-loaded/i.test(equipment)) return 'plate'
+  return null
+}
 
 /** Round to the nearest loadable 5 lbs. */
 export function roundLoad(lbs: number): number {
   return Math.max(0, Math.round(lbs / 5) * 5)
 }
 
-/** Greedy per-side plate split for a plate-loaded machine (no bar weight). */
-export function platesPerSide(total: number): number[] {
-  let side = total / 2
+/** Greedy per-side plate split. `bar` is 45 for a barbell, 0 for a plate-loaded machine. */
+export function platesPerSide(total: number, bar = 0): number[] {
+  let side = (total - bar) / 2
   const out: number[] = []
   for (const plate of PLATES) {
     while (side >= plate - 1e-9) {
@@ -24,9 +34,10 @@ export function platesPerSide(total: number): number[] {
   return out
 }
 
-export function formatPlates(total: number): string {
+export function formatPlates(total: number, bar = 0): string {
   if (total <= 0) return ''
-  const side = platesPerSide(total)
+  if (bar > 0 && total <= bar) return total === bar ? 'empty bar' : 'under the bar'
+  const side = platesPerSide(total, bar)
   if (!side.length) return 'under 5 / side'
   return `${side.join(' + ')} / side`
 }
@@ -38,13 +49,20 @@ export function epley(weight: number, reps: number): number {
   return Math.round(weight * (1 + reps / 30))
 }
 
-/** Two warm-up sets before the first lift: 50% × 5, 75% × 3. */
-export function warmupRamp(target: number | null | undefined): { weight: number; reps: number }[] {
+/**
+ * Warm-up before the first lift: 50% × 5, 75% × 3. On a barbell the empty bar
+ * comes first and nothing lighter than the bar is suggested.
+ */
+export function warmupRamp(target: number | null | undefined, load: LoadType = null): { weight: number; reps: number }[] {
   if (target == null || target < 40) return []
-  return [
+  const ramp = [
     { weight: roundLoad(target * 0.5), reps: 5 },
     { weight: roundLoad(target * 0.75), reps: 3 },
   ]
+  if (load !== 'barbell') return ramp
+  const bar = { weight: BAR_LBS, reps: 10 }
+  const loaded = ramp.filter((w) => w.weight > BAR_LBS)
+  return target > BAR_LBS ? [bar, ...loaded] : [bar]
 }
 
 export function deloadLoad(weight: number | null): number | null {

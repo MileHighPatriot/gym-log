@@ -1,4 +1,4 @@
-import { applySame, bumpReps, bumpWeight, formatLoad, formatPlates, setNudge } from '../lib/coach.ts'
+import { BAR_LBS, applySame, bumpReps, bumpWeight, formatLoad, formatPlates, setNudge, type LoadType } from '../lib/coach.ts'
 import { formatReps } from '../lib/dates.ts'
 import type { LoggedSet, Rpe } from '../types.ts'
 
@@ -14,7 +14,7 @@ export function SetRow({
   last,
   repMin,
   repMax,
-  plateLoaded = false,
+  loadType = null,
   onChange,
 }: {
   index: number
@@ -22,13 +22,16 @@ export function SetRow({
   last?: { weight: number | null; reps: number | null }
   repMin: number
   repMax: number
-  plateLoaded?: boolean
+  loadType?: LoadType
   onChange: (next: LoggedSet) => void
 }) {
   const nudge = setNudge(last, repMax)
   const hasLast = last?.weight != null
   const toggle = () => onChange({ ...set, done: !set.done })
-  const plates = plateLoaded && set.weight != null && set.weight > 0 ? formatPlates(set.weight) : ''
+  const plates =
+    loadType && set.weight != null && set.weight > 0
+      ? formatPlates(set.weight, loadType === 'barbell' ? BAR_LBS : 0)
+      : ''
   return (
     <div className={`set-row${set.done ? ' done' : ''}`}>
       <button

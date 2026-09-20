@@ -12,6 +12,7 @@ import {
   goalFromWeight,
   holdFromData,
   laterRank,
+  loadTypeFor,
   platesPerSide,
   rollingAverage,
   setNudge,
@@ -115,12 +116,19 @@ describe('coach', () => {
     expect(suggestNext({ weight: 185, reps: 10 }, 8, 10, allTopButHard)).toEqual({ weight: 185, reps: 10 })
   })
 
-  it('splits plates per side and formats them', () => {
+  it('splits plates per side for a machine and for a 45 lb bar', () => {
     expect(platesPerSide(185)).toEqual([45, 45, 2.5])
     expect(platesPerSide(90)).toEqual([45])
     expect(platesPerSide(70)).toEqual([35])
     expect(formatPlates(185)).toBe('45 + 45 + 2.5 / side')
     expect(formatPlates(0)).toBe('')
+    expect(platesPerSide(185, 45)).toEqual([45, 25])
+    expect(formatPlates(225, 45)).toBe('45 + 45 / side')
+    expect(formatPlates(45, 45)).toBe('empty bar')
+    expect(formatPlates(40, 45)).toBe('under the bar')
+    expect(loadTypeFor('Barbell + flat bench')).toBe('barbell')
+    expect(loadTypeFor('Plate-loaded row')).toBe('plate')
+    expect(loadTypeFor('Cable, bar or rope')).toBeNull()
   })
 
   it('estimates e1RM, warm-up, and deload loads', () => {
@@ -130,6 +138,12 @@ describe('coach', () => {
       { weight: 95, reps: 5 },
       { weight: 140, reps: 3 },
     ])
+    expect(warmupRamp(185, 'barbell')).toEqual([
+      { weight: 45, reps: 10 },
+      { weight: 95, reps: 5 },
+      { weight: 140, reps: 3 },
+    ])
+    expect(warmupRamp(65, 'barbell')).toEqual([{ weight: 45, reps: 10 }, { weight: 50, reps: 3 }])
     expect(warmupRamp(30)).toEqual([])
     expect(deloadLoad(185)).toBe(165)
     expect(deloadLoad(null)).toBeNull()

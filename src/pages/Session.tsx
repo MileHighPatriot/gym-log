@@ -4,6 +4,7 @@ import { getExercise } from '../data/exercises.ts'
 import {
   elapsedMinutes,
   formatLoad,
+  loadTypeFor,
   sameLoad,
   setNudge,
   suggestNext,
@@ -23,10 +24,6 @@ import type { SetBeat } from '../lib/prs.ts'
 
 function blockName(block: LoggedBlock): string {
   return block.kind === 'walk' ? block.label : getExercise(block.exerciseId).name
-}
-
-function isPlateLoaded(equipment: string): boolean {
-  return /plate-loaded/i.test(equipment)
 }
 
 type Rest = { seconds: number; nextUp?: string; setIndex: number; advance: boolean }
@@ -85,8 +82,11 @@ export function SessionView() {
   const isLiftDay = session.blocks.some((b) => b.kind === 'lift')
   const nudgeCopy = isLiftDay ? windowNudge(elapsed, SESSION_WINDOW_MIN) : null
   const firstLift = session.blocks.findIndex((b) => b.kind === 'lift')
+  const loadType = exercise ? loadTypeFor(exercise.equipment) : null
   const warmup =
-    block.kind === 'lift' && index === firstLift ? warmupRamp(block.logged[0]?.weight ?? suggested?.weight) : []
+    block.kind === 'lift' && index === firstLift
+      ? warmupRamp(block.logged[0]?.weight ?? suggested?.weight, loadType)
+      : []
 
   const patch = (next: SessionLog) => updateActive(next)
 
@@ -223,7 +223,7 @@ export function SessionView() {
                 last={last ?? undefined}
                 repMin={block.repMin}
                 repMax={block.repMax}
-                plateLoaded={isPlateLoaded(exercise.equipment)}
+                loadType={loadType}
                 onChange={(next) => onSet(i, next)}
               />
             ))}

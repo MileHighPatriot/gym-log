@@ -39,6 +39,34 @@ function lift(
 
 const RAW: Exercise[] = [
   lift(
+    'bench-press',
+    'Barbell bench press',
+    'card',
+    'push',
+    'Barbell + flat bench',
+    ['Chest', 'Front shoulders', 'Triceps'],
+    [
+      'Eyes under the bar. Feet planted. Shoulder blades pinched into the bench.',
+      'Lower with control to mid-chest. Touch, do not bounce.',
+      'Press up. Wrists stacked over elbows. Bar weighs 45.',
+    ],
+    { substituteIds: ['plate-chest-press', 'seated-chest-press'] },
+  ),
+  lift(
+    'incline-bench',
+    'Incline barbell bench',
+    'card',
+    'push',
+    'Barbell, incline bench ~30–45°',
+    ['Upper chest', 'Front shoulders', 'Triceps'],
+    [
+      'Set the bench around 30–45°. Same brace as flat bench.',
+      'Lower to the upper chest, not the neck.',
+      'If the bench is taken, swap to the incline machine.',
+    ],
+    { substituteIds: ['incline-machine', 'plate-incline-press'] },
+  ),
+  lift(
     'incline-machine',
     'Incline chest press machine',
     'card',
@@ -49,7 +77,7 @@ const RAW: Exercise[] = [
       'Seat so the handles hit upper chest at the bottom.',
       'Back flat on the pad. Press without locking out harshly.',
     ],
-    { substituteIds: ['plate-incline-press'] },
+    { substituteIds: ['plate-incline-press', 'incline-bench'] },
   ),
   lift(
     'shoulder-press-machine',
@@ -87,29 +115,29 @@ const RAW: Exercise[] = [
     ['Chest', 'Front shoulders', 'Triceps'],
     [
       'Seat so handles hit mid-chest. Press forward, then return with control.',
-      'Same pattern as a plate-loaded chest press.',
+      'Same pattern as the barbell bench.',
     ],
-    { substituteIds: ['plate-chest-press'] },
+    { substituteIds: ['plate-chest-press', 'bench-press'] },
   ),
   lift(
     'plate-chest-press',
     'Plate-loaded chest press',
-    'card',
+    'swap',
     'push',
     'Plate-loaded chest press',
     ['Chest', 'Front shoulders', 'Triceps'],
-    ['Load plates. Same path as the seated chest press. Back on the pad.'],
-    { substituteIds: ['seated-chest-press'] },
+    ['Load plates. Same path as the barbell bench. Back on the pad. Swap when the benches are full.'],
+    { substituteIds: ['bench-press', 'seated-chest-press'] },
   ),
   lift(
     'plate-incline-press',
     'Plate-loaded incline press',
-    'card',
+    'swap',
     'push',
     'Plate-loaded incline press',
     ['Upper chest', 'Front shoulders', 'Triceps'],
-    ['Handles at upper chest. Swap when the incline machine is taken. No barbell.'],
-    { substituteIds: ['incline-machine'] },
+    ['Handles at upper chest. Swap when the incline bench is taken.'],
+    { substituteIds: ['incline-bench', 'incline-machine'] },
   ),
   lift(
     'pec-deck',
@@ -196,7 +224,7 @@ const RAW: Exercise[] = [
     'push',
     'Decline bench or decline machine',
     ['Lower chest', 'Triceps'],
-    ['Machine decline if you want a later add-on. No barbell. Not on the main card.'],
+    ['Machine decline if you want a later add-on. Not on the main card.'],
   ),
 
   lift(
@@ -247,7 +275,7 @@ const RAW: Exercise[] = [
     'pull',
     'Curl machine',
     ['Biceps'],
-    ['Upper arms on the pad if it has one. Full range. No EZ-bar.'],
+    ['Upper arms on the pad if it has one. Full range.'],
     { substituteIds: ['preacher-curl', 'cable-rope-curl'] },
   ),
   lift(
@@ -439,7 +467,7 @@ const RAW: Exercise[] = [
     ['Glutes'],
     [
       'Back on the pad. Drive through the heels. Squeeze at the top.',
-      'This is your hinge — no barbell deadlift.',
+      'Glute work after the squat. The deadlift is the hinge on Saturday.',
     ],
   ),
   lift(
@@ -466,17 +494,48 @@ const RAW: Exercise[] = [
     { substituteIds: ['calf-machine'] },
   ),
   lift(
+    'squat',
+    'Barbell back squat',
+    'card',
+    'legs',
+    'Barbell in a squat rack',
+    ['Quads', 'Glutes', 'Core'],
+    [
+      'Bar on the upper back, not the neck. Brace, then sit between the knees.',
+      'Knees track over the toes. Depth you can own, then stand tall.',
+      'Rack taken? Belt squat is the swap. Bar weighs 45.',
+    ],
+    { substituteIds: ['belt-squat', 'leg-press'] },
+  ),
+  {
+    ...lift(
+      'deadlift',
+      'Barbell deadlift',
+      'card',
+      'legs',
+      'Barbell, from the floor',
+      ['Back', 'Glutes', 'Hamstrings'],
+      [
+        'Bar over mid-foot. Hinge, grab, pull the slack out, lock the back flat.',
+        'Stand up with the bar close to the legs. Lock out tall, then lower under control.',
+        'Every rep starts from the floor. Bar weighs 45.',
+      ],
+      { substituteIds: ['hip-thrust'] },
+    ),
+    ...media('pin-deadlift'),
+  },
+  lift(
     'belt-squat',
     'Belt squat',
-    'card',
+    'swap',
     'legs',
     'Belt squat machine',
     ['Quads', 'Glutes'],
     [
       'Belt around the hips. Squat without a bar on your back.',
-      'If the machine is not there, extra leg-press sets. No barbell, no Smith.',
+      'Swap when every rack is taken. Extra leg press if that is gone too.',
     ],
-    { substituteIds: ['leg-press'] },
+    { substituteIds: ['squat', 'leg-press'] },
   ),
   {
     id: 'mobility',

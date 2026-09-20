@@ -230,12 +230,12 @@ describe('Gym Log app', () => {
             {
               id: 'pa-bench',
               kind: 'lift',
-              exerciseId: 'plate-chest-press',
+              exerciseId: 'bench-press',
               sets: 3,
               repMin: 8,
               repMax: 10,
               restSec: 90,
-              logged: [{ weight: 185, reps: 8, done: true }],
+              logged: [{ weight: 185, reps: 6, done: true }],
             },
           ],
         },
@@ -258,12 +258,12 @@ describe('Gym Log app', () => {
     click('Start')
     expect(el.textContent).toMatch(/Leave/)
     click('Next')
-    expect(el.textContent).toMatch(/last 185 × 8 · beat it/)
+    expect(el.textContent).toMatch(/last 185 × 6 · beat it/)
     const lbs = el.querySelector('input[aria-label="lbs"]') as HTMLInputElement
     expect(lbs.value).toBe('185')
     click('Same')
     expect(el.textContent).toMatch(/✓/)
-    expect(el.textContent).toMatch(/Next up Plate-loaded chest press/)
+    expect(el.textContent).toMatch(/Next up Barbell bench press/)
     click('Skip rest')
     expect(el.textContent).not.toMatch(/Skip rest/)
   })
@@ -285,7 +285,7 @@ describe('Gym Log app', () => {
             {
               id: 'pa-bench',
               kind: 'lift',
-              exerciseId: 'plate-chest-press',
+              exerciseId: 'bench-press',
               sets: 3,
               repMin: 8,
               repMax: 10,
@@ -315,12 +315,13 @@ describe('Gym Log app', () => {
     })
     click('Start')
     click('Next')
-    expect(el.textContent).toMatch(/last 185 × 10 · next 190 × 8/)
+    expect(el.textContent).toMatch(/last 185 × 10 · next 190 × 6/)
     const lbsInput = el.querySelector('input[aria-label="lbs"]') as HTMLInputElement
     expect(lbsInput.value).toBe('190')
     expect(el.textContent).toMatch(/Warm-up/)
     expect(el.textContent).toMatch(/95 × 5/)
-    expect(el.textContent).toMatch(/45 \+ 45 \+ 5 \/ side/)
+    expect(el.textContent).toMatch(/45 \+ 25 \+ 2.5 \/ side/)
+    expect(el.textContent).toMatch(/45 × 10/)
   })
 
   it('starts a walk-only session from a rest day and logs it as a walk', () => {
@@ -362,7 +363,7 @@ describe('Gym Log app', () => {
               {
                 id: 'pa-bench',
                 kind: 'lift',
-                exerciseId: 'plate-chest-press',
+                exerciseId: 'bench-press',
                 sets: 3,
                 repMin: 8,
                 repMax: 10,
@@ -394,7 +395,7 @@ describe('Gym Log app', () => {
     click('Start')
     click('Next')
     expect(el.textContent).toMatch(/deload/)
-    expect(el.querySelectorAll('input[aria-label="lbs"]')).toHaveLength(2)
+    expect(el.querySelectorAll('input[aria-label="lbs"]')).toHaveLength(3)
     expect((el.querySelector('input[aria-label="lbs"]') as HTMLInputElement).value).toBe('180')
   })
 
@@ -417,7 +418,7 @@ describe('Gym Log app', () => {
               {
                 id: 'pa-bench',
                 kind: 'lift',
-                exerciseId: 'plate-chest-press',
+                exerciseId: 'bench-press',
                 sets: 3,
                 repMin: 8,
                 repMax: 10,

@@ -10,15 +10,15 @@ describe('session', () => {
       day: push,
       date: '2026-09-21',
       weekday: 1,
-      lastByExercise: { 'plate-chest-press': { weight: 135, reps: 8 } },
+      lastByExercise: { 'bench-press': { weight: 135, reps: 8 } },
     })
     expect(session.dayProgramId).toBe('push-a')
     expect(session.blocks[0]).toMatchObject({ kind: 'walk', durationSec: 300, done: false })
-    const bench = session.blocks.find((b) => b.kind === 'lift' && b.exerciseId === 'plate-chest-press')
+    const bench = session.blocks.find((b) => b.kind === 'lift' && b.exerciseId === 'bench-press')
     expect(bench?.kind).toBe('lift')
     if (bench?.kind !== 'lift') throw new Error('expected lift')
-    expect(bench.logged).toHaveLength(3)
-    expect(bench.logged[0]).toEqual({ weight: 135, reps: 8, done: false })
+    expect(bench.logged).toHaveLength(4)
+    expect(bench.logged[0]).toEqual({ weight: 140, reps: 6, done: false })
     expect(session.blocks.at(-1)).toMatchObject({ kind: 'walk', durationSec: 900 })
   })
 
@@ -28,15 +28,15 @@ describe('session', () => {
       day: push,
       date: '2026-09-21',
       weekday: 1,
-      lastByExercise: { 'plate-chest-press': { weight: 185, reps: 10 } },
-      lastSetsByExercise: { 'plate-chest-press': [{ weight: 185, reps: 10, done: true }] },
+      lastByExercise: { 'bench-press': { weight: 185, reps: 10 } },
+      lastSetsByExercise: { 'bench-press': [{ weight: 185, reps: 10, done: true }] },
       deload: true,
       programVersion: 3,
     })
-    const bench = session.blocks.find((b) => b.kind === 'lift' && b.exerciseId === 'plate-chest-press')
+    const bench = session.blocks.find((b) => b.kind === 'lift' && b.exerciseId === 'bench-press')
     if (bench?.kind !== 'lift') throw new Error('expected lift')
-    expect(bench.logged).toHaveLength(2)
-    expect(bench.logged[0]).toEqual({ weight: 165, reps: 8, done: false })
+    expect(bench.logged).toHaveLength(3)
+    expect(bench.logged[0]).toEqual({ weight: 165, reps: 6, done: false })
     expect(session.deload).toBe(true)
     expect(session.programVersion).toBe(3)
   })
@@ -74,14 +74,14 @@ describe('session', () => {
       lastByExercise: {},
     })
     expect(sessionComplete(session)).toBe(false)
-    expect(sessionProgress(session).total).toBe(3 + 3 + 3 + 3 + 2)
+    expect(sessionProgress(session).total).toBe(4 + 3 + 3 + 3 + 2)
 
     session = swapLift(session, 'pa-bench', 'seated-chest-press')
     const bench = session.blocks.find((b) => b.id === 'pa-bench')
     expect(bench).toMatchObject({
       kind: 'lift',
       exerciseId: 'seated-chest-press',
-      substituteOf: 'plate-chest-press',
+      substituteOf: 'bench-press',
     })
 
     const finished: SessionLog = {
@@ -96,6 +96,6 @@ describe('session', () => {
       }),
     }
     expect(sessionComplete(finished)).toBe(true)
-    expect(lastByExercise([finished])['plate-chest-press']).toEqual({ weight: 100, reps: 10 })
+    expect(lastByExercise([finished])['bench-press']).toEqual({ weight: 100, reps: 10 })
   })
 })
