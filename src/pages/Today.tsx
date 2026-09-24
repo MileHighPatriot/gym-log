@@ -22,6 +22,7 @@ import { InstallBanner } from '../ui/Install.tsx'
 import { OnboardingCard } from '../ui/Onboarding.tsx'
 import { WeekRecapCard } from '../ui/WeekRecapCard.tsx'
 import { WeekStrip } from '../ui/WeekStrip.tsx'
+import { SettingsButton } from '../ui/SettingsButton.tsx'
 import type { DayProgram, ProgramBlock } from '../types.ts'
 
 export function TodayPage() {
@@ -108,6 +109,7 @@ export function TodayPage() {
   return (
     <section className="page">
       <header className="page-head">
+        <SettingsButton />
         <p className="eyebrow">
           {WEEKDAY_NAMES[weekday]} {selectedDate}
           {deloadOn && isToday ? ' · deload week' : ''}

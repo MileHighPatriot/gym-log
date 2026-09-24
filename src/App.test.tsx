@@ -5,7 +5,8 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import App from './App.tsx'
 import { StoreProvider } from './state/Store.tsx'
-import { STORAGE_KEY } from './lib/backup.ts'
+import { SNAPSHOT_KEY, STORAGE_KEY } from './lib/backup.ts'
+import { addDays, localISODate } from './lib/dates.ts'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -39,6 +40,48 @@ function click(label: string) {
   act(() => {
     btn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   })
+}
+
+function type(input: HTMLInputElement, value: string) {
+  act(() => {
+    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set?.call(input, value)
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+}
+
+function openSettings() {
+  const gear = el.querySelector('button[aria-label="Settings"]')
+  if (!gear) throw new Error('No settings gear')
+  act(() => {
+    gear.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+}
+
+async function pickFile(input: HTMLInputElement, file: File) {
+  await act(async () => {
+    Object.defineProperty(input, 'files', { configurable: true, value: [file] })
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+    await new Promise((r) => setTimeout(r, 0))
+  })
+}
+
+function seed(extra: Record<string, unknown>) {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      version: 1,
+      exportedAt: '',
+      programOverride: null,
+      logs: [],
+      activeSession: null,
+      bodyWeight: [],
+      dismissedSuggestions: [],
+      pinnedSuggestions: [],
+      foodEntries: [],
+      dietGoals: { kcal: 0, protein: 0 },
+      ...extra,
+    }),
+  )
 }
 
 describe('Gym Log app', () => {
@@ -80,7 +123,7 @@ describe('Gym Log app', () => {
     click('Start workout')
     click('Finish')
     click('Done')
-    click('Log')
+    nav('Log')
     expect(el.textContent).toMatch(/Push|Pull|Legs/)
     const sessionBtn = [...el.querySelectorAll('button')].find((b) => b.className.includes('session-row-btn'))
     if (!sessionBtn) throw new Error('No session row')
@@ -144,8 +187,10 @@ describe('Gym Log app', () => {
 
   it('photo with a key lands as an editable draft', async () => {
     const orig = globalThis.fetch
-    globalThis.fetch = (async () =>
-      new Response(
+    const calls: { url: string; init?: RequestInit }[] = []
+    globalThis.fetch = (async (url: string, init?: RequestInit) => {
+      calls.push({ url: String(url), init })
+      return new Response(
         JSON.stringify({
           candidates: [
             {
@@ -162,7 +207,8 @@ describe('Gym Log app', () => {
           ],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
-      )) as typeof fetch
+      )
+    }) as typeof fetch
     try {
       render()
       click('Log food')
@@ -196,6 +242,9 @@ describe('Gym Log app', () => {
       const raw = localStorage.getItem(STORAGE_KEY)
       expect(raw).toMatch(/White rice/)
       expect(raw).not.toMatch(/test-key/)
+      // The key rides in a header, never the URL.
+      expect(calls[0].url).not.toMatch(/key=/)
+      expect(new Headers(calls[0].init?.headers).get('x-goog-api-key')).toBe('test-key')
     } finally {
       globalThis.fetch = orig
     }
@@ -457,7 +506,8 @@ describe('Gym Log app', () => {
   })
 
   it('logs a food into a meal and repeats yesterday', () => {
-    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
+    // Local calendar day, not UTC: the app works in local dates.
+    const yesterday = addDays(localISODate(), -1)
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -493,5 +543,82 @@ describe('Gym Log app', () => {
     expect(el.textContent).toMatch(/Copied 1 item/)
     expect(el.textContent).toMatch(/breakfast · 130 kcal/)
     click('Read a label')
+  })
+
+  it('opens Settings from the gear', () => {
+    render()
+    openSettings()
+    expect(el.textContent).toMatch(/Settings/)
+    expect(el.textContent).toMatch(/Safety copy/)
+    expect(el.textContent).toMatch(/Build /)
+  })
+
+  it('imports a backup only after you confirm, keeping a safety copy', async () => {
+    seed({ bodyWeight: [{ date: '2026-09-01', lbs: 190 }], settings: { onboarded: true } })
+    render()
+    openSettings()
+    const backup = JSON.stringify({
+      version: 1,
+      exportedAt: '2026-09-20T12:00:00.000Z',
+      programOverride: null,
+      logs: [
+        {
+          id: 'l1',
+          date: '2026-09-20',
+          weekday: 0,
+          dayProgramId: 'push-a',
+          startedAt: '2026-09-20T12:00:00.000Z',
+          endedAt: '2026-09-20T13:00:00.000Z',
+          blocks: [],
+        },
+      ],
+      activeSession: null,
+      bodyWeight: [{ date: '2026-09-20', lbs: 201 }],
+      dismissedSuggestions: [],
+      pinnedSuggestions: [],
+      foodEntries: [],
+      dietGoals: { kcal: 0, protein: 0 },
+    })
+    const input = el.querySelector('input[type="file"]') as HTMLInputElement
+    await pickFile(input, new File([backup], 'backup.json', { type: 'application/json' }))
+    expect(el.textContent).toMatch(/Replace everything on this phone/)
+    expect(el.textContent).toMatch(/sessions · 2026-09-20 to 2026-09-20/)
+    expect(localStorage.getItem(STORAGE_KEY)).toMatch(/"lbs":190/)
+
+    click('Replace my data')
+    expect(localStorage.getItem(STORAGE_KEY)).toMatch(/"lbs":201/)
+    expect(localStorage.getItem(SNAPSHOT_KEY)).toMatch(/"lbs":190/)
+    expect(el.textContent).toMatch(/Imported backup.json/)
+  })
+
+  it('a bad import says why and changes nothing', async () => {
+    seed({ bodyWeight: [{ date: '2026-09-01', lbs: 190 }], settings: { onboarded: true } })
+    render()
+    openSettings()
+    const input = el.querySelector('input[type="file"]') as HTMLInputElement
+    await pickFile(input, new File(['nope'], 'bad.json', { type: 'application/json' }))
+    expect(el.textContent).toMatch(/isn’t valid JSON/)
+    expect(el.textContent).toMatch(/Nothing was changed/)
+    expect(el.textContent).not.toMatch(/Replace everything/)
+    expect(localStorage.getItem(STORAGE_KEY)).toMatch(/"lbs":190/)
+  })
+
+  it('Week editor saves once on Save and blocks a backwards rep range', () => {
+    render()
+    nav('Week')
+    expect(el.textContent).toMatch(/card v1/)
+    const [sets, from, to] = [...el.querySelectorAll('.lift-edit')][0].querySelectorAll('input')
+    type(from, String(Number(to.value) + 1))
+    expect(el.textContent).toMatch(/can’t be more than/)
+    const save = [...el.querySelectorAll('button')].find((b) => b.textContent === 'Save') as HTMLButtonElement
+    expect(save.disabled).toBe(true)
+    expect(el.textContent).toMatch(/card v1/)
+
+    type(from, '1')
+    type(sets, '5')
+    expect(el.textContent).toMatch(/card v1/)
+    click('Save')
+    expect(el.textContent).toMatch(/card v2/)
+    expect([...el.querySelectorAll('.lift-edit')][0].textContent).toMatch(/5×/)
   })
 })

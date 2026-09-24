@@ -1,6 +1,6 @@
 import type { Tab } from '../types.ts'
 
-const TABS: Tab[] = ['today', 'eat', 'exercises', 'progress', 'program']
+const TABS: Tab[] = ['today', 'eat', 'exercises', 'progress', 'program', 'settings']
 
 export function tabFromHash(hash = typeof location === 'undefined' ? '' : location.hash): Tab | null {
   const name = hash.replace(/^#\/?/, '').split('/')[0]

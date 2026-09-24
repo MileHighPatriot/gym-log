@@ -8,6 +8,7 @@ describe('tabFromHash', () => {
     expect(tabFromHash('#/eat')).toBe('eat')
     expect(tabFromHash('#/try')).toBe('program')
     expect(tabFromHash('#/exercises/bench-press')).toBe('exercises')
+    expect(tabFromHash('#/settings')).toBe('settings')
     expect(tabFromHash('#/nope')).toBeNull()
   })
 })

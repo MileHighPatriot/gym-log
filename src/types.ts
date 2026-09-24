@@ -14,9 +14,6 @@ export type Exercise = {
   setupImage: string
   finishImage: string
   video: string
-  vasaUrl?: string
-  youtubeId?: string
-  videoCredit?: string
   substituteIds: string[]
 }
 
@@ -204,4 +201,4 @@ export type AppState = {
   settings: Settings
 }
 
-export type Tab = 'today' | 'eat' | 'exercises' | 'progress' | 'program'
+export type Tab = 'today' | 'eat' | 'exercises' | 'progress' | 'program' | 'settings'

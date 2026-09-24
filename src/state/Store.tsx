@@ -1,7 +1,16 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { DAYS, WALK_DAY } from '../data/program.ts'
 import { SUGGESTIONS } from '../data/suggestions.ts'
-import { loadState, saveState, parseBackup, toBackup } from '../lib/backup.ts'
+import {
+  loadSnapshot,
+  loadState,
+  previewBackup,
+  saveState,
+  snapshotDue,
+  toBackup,
+  writeSnapshot,
+  type BackupPreview,
+} from '../lib/backup.ts'
 import { addDays, localISODate, mondayOfWeek, weekdayOf } from '../lib/dates.ts'
 import { repeatDay } from '../lib/diet.ts'
 import { lastByExercise, lastSetsByExercise, startSession as buildSession, swapLift } from '../lib/session.ts'
@@ -58,7 +67,16 @@ type StoreApi = {
   updateDay: (day: DayProgram) => void
   resetProgram: () => void
   exportBackup: () => string
-  importBackup: (raw: string) => void
+  /** Reads a backup file without touching your data. */
+  previewImport: (raw: string) => BackupPreview
+  /** Snapshots the current data, then replaces it. */
+  applyImport: (next: AppState) => void
+  /** When the last safety snapshot was taken, or null. */
+  snapshotAt: string | null
+  /** Swaps in the snapshot; the data it replaces becomes the new snapshot, so this can be undone. */
+  restoreSnapshot: () => boolean
+  /** True when the last save was refused (phone storage full). */
+  storageError: boolean
 }
 
 const StoreContext = createContext<StoreApi | null>(null)
@@ -71,10 +89,35 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [reviewSessionId, setReviewSessionId] = useState<string | null>(null)
   const [justFinished, setJustFinished] = useState<SessionLog | null>(null)
   const [selectedDate, setSelectedDate] = useState(() => localISODate())
+  const [storageError, setStorageError] = useState(false)
+  const [snapshotAt, setSnapshotAt] = useState<string | null>(() => loadSnapshot()?.at ?? null)
+  const snapshotAtRef = useRef(snapshotAt)
 
   useEffect(() => {
-    saveState(state)
+    // First save of the day keeps a copy of what was there before it.
+    if (snapshotDue(snapshotAtRef.current, localISODate())) {
+      const at = new Date().toISOString()
+      if (writeSnapshot(state, localStorage, at)) {
+        snapshotAtRef.current = at
+        // Mirrors what localStorage now holds; it only changes once a day.
+        // oxlint-disable-next-line react/set-state-in-effect
+        setSnapshotAt(at)
+      }
+    }
+    setStorageError(!saveState(state))
   }, [state])
+
+  useEffect(() => {
+    void navigator.storage?.persist?.().catch(() => false)
+  }, [])
+
+  const snapshotNow = (current: AppState) => {
+    const at = new Date().toISOString()
+    if (writeSnapshot(current, localStorage, at)) {
+      snapshotAtRef.current = at
+      setSnapshotAt(at)
+    }
+  }
 
   const days = useMemo(() => [...(state.programOverride ?? DAYS), WALK_DAY], [state.programOverride])
   const today = localISODate()
@@ -280,11 +323,43 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       exportBackup() {
         return JSON.stringify(toBackup(state), null, 2)
       },
-      importBackup(raw) {
-        setState(parseBackup(raw))
+      previewImport(raw) {
+        return previewBackup(raw)
       },
+      applyImport(next) {
+        snapshotNow(state)
+        setSessionView(false)
+        setReviewSessionId(null)
+        setJustFinished(null)
+        setState(next)
+      },
+      snapshotAt,
+      restoreSnapshot() {
+        const snap = loadSnapshot()
+        if (!snap) return false
+        snapshotNow(state)
+        setSessionView(false)
+        setReviewSessionId(null)
+        setJustFinished(null)
+        setState(snap.state)
+        return true
+      },
+      storageError,
     }
-  }, [state, tab, exerciseId, sessionView, reviewSessionId, justFinished, days, today, selectedDate, deloadOn])
+  }, [
+    state,
+    tab,
+    exerciseId,
+    sessionView,
+    reviewSessionId,
+    justFinished,
+    days,
+    today,
+    selectedDate,
+    deloadOn,
+    snapshotAt,
+    storageError,
+  ])
 
   return <StoreContext.Provider value={api}>{children}</StoreContext.Provider>
 }

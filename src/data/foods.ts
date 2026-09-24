@@ -91,7 +91,3 @@ export function searchFoods(q: string): FoodItem[] {
   if (!needle) return FOODS.slice(0, 12)
   return FOODS.filter((food) => food.name.toLowerCase().includes(needle)).slice(0, 20)
 }
-
-export function getFood(id: string): FoodItem | undefined {
-  return FOODS.find((food) => food.id === id)
-}

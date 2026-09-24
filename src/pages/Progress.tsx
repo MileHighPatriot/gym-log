@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { EXERCISE_BY_ID } from '../data/exercises.ts'
 import { WEEKDAY_SHORT, dayKindFromId, programLabel } from '../data/program.ts'
-import { backupOverdue, loadLastExport, markExported } from '../lib/backup.ts'
+import { backupOverdue } from '../lib/backup.ts'
+import { useBackupActions } from '../lib/backupFile.ts'
 import {
   bestLiftsThisWeek,
   epley,
@@ -15,7 +16,7 @@ import {
 import { formatDuration, weekdayOf } from '../lib/dates.ts'
 import { historyForExercise, recordsFromLogs, volumeForLog } from '../lib/prs.ts'
 import { useStore } from '../state/Store.tsx'
-import { InstallBanner } from '../ui/Install.tsx'
+import { SettingsButton } from '../ui/SettingsButton.tsx'
 import { WeekRecapCard } from '../ui/WeekRecapCard.tsx'
 import { WeekStrip } from '../ui/WeekStrip.tsx'
 import { SessionReview } from './SessionReview.tsx'
@@ -29,8 +30,6 @@ export function ProgressPage() {
     today,
     logBodyWeight,
     removeBodyWeight,
-    exportBackup,
-    importBackup,
     reviewSessionId,
     openSession,
     openExercise,
@@ -40,7 +39,7 @@ export function ProgressPage() {
   const [lbs, setLbs] = useState('')
   const [picked, setPicked] = useState<string | null>(null)
   const [kindFilter, setKindFilter] = useState<KindFilter>('all')
-  const [lastExport, setLastExport] = useState<string | null>(() => loadLastExport())
+  const { lastExport, canShare, download, share } = useBackupActions()
   const finished = state.logs.filter((l) => l.endedAt)
   const completed = new Set(finished.filter((l) => l.blocks.some((b) => b.kind === 'lift')).map((l) => l.date))
   const records = recordsFromLogs(state.logs)
@@ -53,7 +52,6 @@ export function ProgressPage() {
   const avg7 = rollingAverage(state.bodyWeight, today)
   const slope = weightSlopePerWeek(weights.slice(-8))
   const overdue = backupOverdue(finished.length, lastExport)
-  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
 
   const history = useMemo(
     () => (picked ? historyForExercise(state.logs, picked) : []),
@@ -74,38 +72,6 @@ export function ProgressPage() {
     )
   }
 
-  const backupFile = () => new File([exportBackup()], `gym-log-${today}.json`, { type: 'application/json' })
-
-  const exported = () => {
-    const now = new Date().toISOString()
-    markExported(now)
-    setLastExport(now)
-  }
-
-  const download = () => {
-    const url = URL.createObjectURL(backupFile())
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `gym-log-${today}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    exported()
-  }
-
-  const share = async () => {
-    const file = backupFile()
-    try {
-      if (navigator.canShare && !navigator.canShare({ files: [file] })) {
-        download()
-        return
-      }
-      await navigator.share({ files: [file], title: 'Gym Log backup' })
-      exported()
-    } catch {
-      /* user cancelled */
-    }
-  }
-
   const visibleSessions = [...finished]
     .reverse()
     .filter((l) => {
@@ -119,6 +85,7 @@ export function ProgressPage() {
   return (
     <section className="page">
       <header className="page-head">
+        <SettingsButton />
         <p className="eyebrow">History</p>
         <h1>Log</h1>
         <p className="hero-stat">{compare.thisWeek.toLocaleString()}</p>
@@ -363,32 +330,14 @@ export function ProgressPage() {
           {lastExport ? ` Last export ${lastExport.slice(0, 10)}.` : ''}
         </p>
         <div className="row wrap">
-          {canShare && (
-            <button type="button" className="primary" onClick={share}>
-              Share backup
-            </button>
-          )}
-          <button type="button" onClick={download}>
-            Export JSON
+          <button type="button" className="primary" onClick={canShare ? share : download}>
+            {canShare ? 'Share backup' : 'Export JSON'}
           </button>
-          <label className="file">
-            Import
-            <input
-              type="file"
-              accept="application/json"
-              onChange={async (e) => {
-                const file = e.target.files?.[0]
-                if (!file) return
-                const text = await file.text()
-                importBackup(text)
-                e.target.value = ''
-              }}
-            />
-          </label>
+          <button type="button" onClick={() => setTab('settings')}>
+            Import &amp; restore
+          </button>
         </div>
       </div>
-
-      <InstallBanner />
     </section>
   )
 }

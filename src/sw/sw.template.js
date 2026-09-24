@@ -1,6 +1,6 @@
 /* Gym Log service worker. vite.config.ts fills in BUILD_ID and PRECACHE at build time. */
-const BUILD_ID = '20260923-2217-761e34e'
-const PRECACHE = ["index.html","manifest.webmanifest","favicon.svg","assets/index-CeRpJ5xk.js","assets/index-CNhGTux0.css"]
+const BUILD_ID = '__BUILD_ID__'
+const PRECACHE = __PRECACHE__
 
 const SHELL = `gym-log-shell-${BUILD_ID}`
 const MEDIA = 'gym-log-media-v1'

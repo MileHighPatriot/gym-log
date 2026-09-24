@@ -100,7 +100,7 @@ export function ProgramPage() {
                 }
                 return (
                   <LiftEditor
-                    key={block.id}
+                    key={`${block.id}-${block.sets}-${block.repMin}-${block.repMax}-${block.restSec}`}
                     block={block}
                     onChange={(next) =>
                       updateDay({
@@ -154,54 +154,89 @@ export function ProgramPage() {
   )
 }
 
+type LiftDraft = { sets: string; repMin: string; repMax: string; restSec: string }
+
+const draftFrom = (b: LiftBlock): LiftDraft => ({
+  sets: String(b.sets),
+  repMin: String(b.repMin),
+  repMax: String(b.repMax),
+  restSec: String(b.restSec),
+})
+
+/** Why a draft can't be saved, or null when it can. */
+function liftDraftError(d: LiftDraft): string | null {
+  const [sets, repMin, repMax, rest] = [d.sets, d.repMin, d.repMax, d.restSec].map(Number)
+  if (!Number.isInteger(sets) || sets < 1 || sets > 10) return 'Sets must be 1 to 10.'
+  if (!Number.isInteger(repMin) || repMin < 1 || !Number.isInteger(repMax) || repMax < 1) return 'Reps must be whole numbers.'
+  if (repMin > repMax) return '“From” reps can’t be more than “to”.'
+  if (!Number.isFinite(rest) || rest < 0 || rest > 600) return 'Rest must be 0 to 600 seconds.'
+  return null
+}
+
+/** Edits a local draft; nothing is saved (and the card version doesn't move) until Save. */
 function LiftEditor({ block, onChange }: { block: LiftBlock; onChange: (b: LiftBlock) => void }) {
+  const [draft, setDraft] = useState<LiftDraft>(() => draftFrom(block))
+  const dirty = JSON.stringify(draft) !== JSON.stringify(draftFrom(block))
+  const error = dirty ? liftDraftError(draft) : null
+  const field = (name: keyof LiftDraft, label: string, extra?: { step?: string; min?: string }) => (
+    <label>
+      {label}
+      <input
+        type="number"
+        inputMode="numeric"
+        min={extra?.min ?? '1'}
+        step={extra?.step}
+        value={draft[name]}
+        aria-invalid={error ? true : undefined}
+        onChange={(e) => setDraft((d) => ({ ...d, [name]: e.target.value }))}
+      />
+    </label>
+  )
   return (
     <div className="lift-edit">
       <strong>{getExercise(block.exerciseId).name}</strong>
       <div className="row">
-        <label>
-          sets
-          <input
-            type="number"
-            min="1"
-            value={block.sets}
-            onChange={(e) => onChange({ ...block, sets: Number(e.target.value) || 1 })}
-          />
-        </label>
-        <label>
-          from
-          <input
-            type="number"
-            min="1"
-            value={block.repMin}
-            onChange={(e) => onChange({ ...block, repMin: Number(e.target.value) || 1 })}
-          />
-        </label>
-        <label>
-          to
-          <input
-            type="number"
-            min="1"
-            value={block.repMax}
-            onChange={(e) => onChange({ ...block, repMax: Number(e.target.value) || 1 })}
-          />
-        </label>
-        <label>
-          rest
-          <input
-            type="number"
-            min="0"
-            step="15"
-            value={block.restSec}
-            onChange={(e) => onChange({ ...block, restSec: Number(e.target.value) || 0 })}
-          />
-        </label>
+        {field('sets', 'sets')}
+        {field('repMin', 'from')}
+        {field('repMax', 'to')}
+        {field('restSec', 'rest', { step: '15', min: '0' })}
       </div>
-      <p className="muted">
-        {block.sets}×{formatReps(block.repMin, block.repMax)} · {formatRest(block.restSec)}
-        {block.notes ? ` · ${block.notes}` : ''}
-        {block.loadNote ? ` · ${block.loadNote}` : ''}
-      </p>
+      {dirty ? (
+        <>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="row">
+            <button type="button" className="ghost small" onClick={() => setDraft(draftFrom(block))}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="primary small"
+              disabled={error != null}
+              onClick={() =>
+                onChange({
+                  ...block,
+                  sets: Number(draft.sets),
+                  repMin: Number(draft.repMin),
+                  repMax: Number(draft.repMax),
+                  restSec: Number(draft.restSec),
+                })
+              }
+            >
+              Save
+            </button>
+          </div>
+        </>
+      ) : (
+        <p className="muted">
+          {block.sets}×{formatReps(block.repMin, block.repMax)} · {formatRest(block.restSec)}
+          {block.notes ? ` · ${block.notes}` : ''}
+          {block.loadNote ? ` · ${block.loadNote}` : ''}
+        </p>
+      )}
     </div>
   )
 }

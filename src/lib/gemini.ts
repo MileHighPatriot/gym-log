@@ -47,11 +47,12 @@ export function readFoodLabel(file: File, key: string): Promise<PhotoGuess[]> {
 
 async function askGemini(file: File, key: string, prompt: string): Promise<PhotoGuess[]> {
   const { mime, data } = await fileToInline(file)
+  // Key goes in a header, not the URL, so it stays out of logs and history.
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
         contents: [
           {

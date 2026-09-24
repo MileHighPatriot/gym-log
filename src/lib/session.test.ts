@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DAYS } from '../data/program.ts'
-import { lastByExercise, sessionComplete, sessionProgress, startSession, swapLift } from './session.ts'
+import { lastByExercise, sessionProgress, startSession, swapLift } from './session.ts'
 import type { SessionLog } from '../types.ts'
 
 describe('session', () => {
@@ -73,8 +73,7 @@ describe('session', () => {
       weekday: 1,
       lastByExercise: {},
     })
-    expect(sessionComplete(session)).toBe(false)
-    expect(sessionProgress(session).total).toBe(4 + 3 + 3 + 3 + 2)
+    expect(sessionProgress(session)).toEqual({ done: 0, total: 4 + 3 + 3 + 3 + 2 })
 
     session = swapLift(session, 'pa-bench', 'seated-chest-press')
     const bench = session.blocks.find((b) => b.id === 'pa-bench')
@@ -95,7 +94,8 @@ describe('session', () => {
         }
       }),
     }
-    expect(sessionComplete(finished)).toBe(true)
+    const progress = sessionProgress(finished)
+    expect(progress.done).toBe(progress.total)
     expect(lastByExercise([finished])['bench-press']).toEqual({ weight: 100, reps: 10 })
   })
 })

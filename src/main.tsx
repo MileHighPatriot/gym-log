@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { StoreProvider } from './state/Store.tsx'
+import { registerServiceWorker } from './lib/sw.ts'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -12,10 +13,4 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {
-      /* offline cache is optional */
-    })
-  })
-}
+registerServiceWorker()

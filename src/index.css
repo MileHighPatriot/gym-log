@@ -7,11 +7,7 @@
   --muted: #b5b5b5;
   --accent: #e10600;
   --accent-ink: #fff;
-  --ice: #fff;
-  --ok: #fff;
-  --warn: #fff;
   --push: #e10600;
-  --pull: #fff;
   --legs: #8a0b0b;
   --rest: #5a5a5a;
   --sans: 'Barlow Condensed', system-ui, sans-serif;
@@ -809,7 +805,7 @@ button.star.on {
 }
 
 .set-row.done input {
-  border-color: var(--ok);
+  border-color: var(--text);
 }
 
 .set-row.done .set-nudge {
@@ -1204,7 +1200,8 @@ button.star.on {
   z-index: 18;
 }
 
-.sheet.how-sheet {
+.sheet.how-sheet,
+.sheet.bottom-sheet {
   position: fixed;
   left: 50%;
   right: auto;
@@ -1478,6 +1475,15 @@ button.star.on {
   background: var(--bg-2);
 }
 
+.card .row label.file {
+  flex: 0 0 auto;
+  flex-direction: row;
+  font-size: inherit;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
 .file input {
   position: absolute;
   inset: 0;
@@ -1629,4 +1635,112 @@ button.star.on {
   .rest-overlay {
     gap: 10px;
   }
+}
+
+/* Settings, update and storage bars, confirm sheets */
+
+.page-head {
+  position: relative;
+}
+
+.settings-btn {
+  position: absolute;
+  top: -10px;
+  right: -12px;
+  min-height: 44px;
+  width: 44px;
+  padding: 10px;
+  color: var(--muted);
+}
+
+.settings-btn svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.settings-sub {
+  margin-top: 18px;
+}
+
+.update-bar,
+.storage-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 12px;
+  padding-top: calc(6px + env(safe-area-inset-top));
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.update-bar {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.storage-bar {
+  background: #fff;
+  color: #000;
+}
+
+.update-bar button.small,
+.storage-bar button.small {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.form-error {
+  color: #fff;
+  background: rgba(225, 6, 0, 0.18);
+  border-left: 4px solid var(--accent);
+  padding: 8px 10px;
+  margin-top: 10px;
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--accent);
+}
+
+button.link {
+  background: none;
+  border: 0;
+  min-height: 0;
+  padding: 0;
+  color: #fff;
+  text-decoration: underline;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.sheet-actions {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.sheet-actions button {
+  flex: 1;
+}
+
+.import-summary li {
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.import-summary li strong {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 400;
+  min-width: 3ch;
+}
+
+.storage-line {
+  margin-top: 14px;
+  font-size: 13px;
 }

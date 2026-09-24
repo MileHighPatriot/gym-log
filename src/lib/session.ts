@@ -149,13 +149,6 @@ export function lastByExercise(logs: SessionLog[]): Record<string, { weight: num
   return map
 }
 
-export function sessionComplete(session: SessionLog): boolean {
-  return session.blocks.every((block) => {
-    if (block.kind === 'walk') return block.done
-    return block.logged.every((set) => set.done)
-  })
-}
-
 export function sessionProgress(session: SessionLog): { done: number; total: number } {
   let done = 0
   let total = 0

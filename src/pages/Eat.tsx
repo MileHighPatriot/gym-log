@@ -24,7 +24,7 @@ import type { PhotoGuess } from '../lib/gemini.ts'
 type Draft = PhotoGuess & { source: 'photo' | 'label' }
 
 export function EatPage() {
-  const { state, today, logFood, removeFood, setDietGoals, repeatYesterday, toggleFavoriteFood } = useStore()
+  const { state, today, logFood, removeFood, setDietGoals, repeatYesterday, toggleFavoriteFood, setTab } = useStore()
   const latestLbs = [...state.bodyWeight].sort((a, b) => a.date.localeCompare(b.date)).at(-1)?.lbs
   const [kcal, setKcal] = useState(state.dietGoals.kcal ? String(state.dietGoals.kcal) : '')
   const [protein, setProtein] = useState(
@@ -42,6 +42,8 @@ export function EatPage() {
   const [customKcal, setCustomKcal] = useState('')
   const [customProtein, setCustomProtein] = useState('')
   const [key, setKey] = useState(() => loadGeminiKey())
+  // Once a key is saved it lives in Settings; the box here is only for first-time setup.
+  const [hadKey] = useState(() => loadGeminiKey() !== '')
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoError, setPhotoError] = useState('')
   const [photoUrl, setPhotoUrl] = useState('')
@@ -546,15 +548,28 @@ export function EatPage() {
 
       <div className="card">
         <h2>Photo key</h2>
-        <p className="muted">Gemini key stays on this phone. It is not in the JSON backup. Estimates leave the phone to Google.</p>
-        <input
-          type="password"
-          autoComplete="off"
-          placeholder="Gemini API key"
-          value={key}
-          onChange={(e) => setKey(e.target.value)}
-          onBlur={() => saveGeminiKey(key)}
-        />
+        {hadKey ? (
+          <p className="muted">
+            Saved on this phone.{' '}
+            <button type="button" className="link" onClick={() => setTab('settings')}>
+              Change it in Settings
+            </button>
+          </p>
+        ) : (
+          <>
+            <p className="muted">
+              Gemini key stays on this phone. It is not in the JSON backup. Estimates leave the phone to Google.
+            </p>
+            <input
+              type="password"
+              autoComplete="off"
+              placeholder="Gemini API key"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              onBlur={() => saveGeminiKey(key)}
+            />
+          </>
+        )}
       </div>
     </section>
   )

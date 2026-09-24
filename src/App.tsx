@@ -6,8 +6,11 @@ import { EatPage } from './pages/Eat.tsx'
 import { ExercisesPage } from './pages/Exercises.tsx'
 import { ProgressPage } from './pages/Progress.tsx'
 import { ProgramPage } from './pages/Program.tsx'
+import { SettingsPage } from './pages/Settings.tsx'
 import { hashForTab, tabFromHash } from './lib/hash.ts'
 import { OfflineBar } from './ui/Install.tsx'
+import { StorageBar } from './ui/StorageBar.tsx'
+import { UpdateBanner } from './ui/UpdateBanner.tsx'
 import type { Tab } from './types.ts'
 
 export default function App() {
@@ -45,7 +48,9 @@ export default function App() {
 
   return (
     <div className={`app${state.activeSession && sessionView && tab === 'today' ? ' in-session' : ''}`}>
+      <UpdateBanner />
       <OfflineBar />
+      <StorageBar />
       <main>
         <div key={tab} className="page-enter">
           {tab === 'today' && <TodayPage />}
@@ -53,6 +58,7 @@ export default function App() {
           {tab === 'exercises' && <ExercisesPage />}
           {tab === 'progress' && <ProgressPage />}
           {tab === 'program' && <ProgramPage />}
+          {tab === 'settings' && <SettingsPage />}
         </div>
       </main>
       {!(state.activeSession && sessionView && tab === 'today') && <Nav tab={tab} onTab={go} />}
